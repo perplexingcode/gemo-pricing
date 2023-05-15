@@ -1,6 +1,18 @@
 <template>
   <ClientOnly>
     <div id="main-wrap" class="">
+      <div class="language p-3 cursor-pointer hidden" @click="lang = !lang">
+        <img
+          width="32"
+          v-if="lang === true"
+          src="https://img.icons8.com/color/48/usa.png"
+        />
+        <img
+          v-else
+          width="32"
+          src="https://img.icons8.com/color/48/vietnam.png"
+        />
+      </div>
       <div class="header text-center">
         <div v-if="order.items.length > 5">
           <p>
@@ -34,13 +46,17 @@
                 class="step"
                 :class="{ active: step === 1, hidden: step !== 1 }"
               >
-                <div class="text">Select item</div>
+                <div class="text">
+                  {{ lang ? 'Select item' : 'Hãy chọn món' }}
+                </div>
               </div>
               <div
                 class="step"
                 :class="{ active: step === 2, hidden: step !== 2 }"
               >
-                <div class="text">Select options</div>
+                <div class="text">
+                  {{ lang ? 'Select options' : 'Tùy chọn' }}
+                </div>
               </div>
             </div>
             <div class="btn-wrapper plus-minus">
@@ -63,7 +79,7 @@
           <div class="step-1" v-show="step === 1">
             <div class="menu">
               <div class="menu-list drink">
-                <h3>Drinks</h3>
+                <h3>{{ lang ? 'Drinks' : 'Đồ uống' }}</h3>
                 <div class="flex list-items">
                   <div
                     v-for="item in drinks"
@@ -85,7 +101,7 @@
                 </div>
               </div>
               <div class="menu-list food">
-                <h3>Foods</h3>
+                <h3>{{ lang ? 'Foods' : 'Đồ ăn' }}</h3>
                 <div class="list-items flex">
                   <div
                     v-for="item in foods"
@@ -175,7 +191,9 @@
         </div>
         <div class="order-details border h-fit">
           <div class="text-center">
-            <h1 class="text-xl font-bold">Check out</h1>
+            <h1 class="text-xl font-bold">
+              {{ lang ? 'Check out' : 'Tính tiền' }}
+            </h1>
           </div>
           <div class="invoice-items">
             <div v-for="item in order.items" :key="item.id" class="flex">
@@ -186,7 +204,9 @@
           </div>
           <hr />
           <div class="invoice-tax flex">
-            <p>Tax ({{ Math.floor(tax * 10000) / 100 }}%)</p>
+            <p>
+              {{ lang ? 'Tax' : 'Thuế' }} ({{ Math.floor(tax * 10000) / 100 }}%)
+            </p>
             <div class="invoice-dots"></div>
             <p>
               ${{
@@ -199,7 +219,7 @@
             </p>
           </div>
           <div class="invoice-total flex">
-            <p>Total</p>
+            <p>{{ lang ? 'Total' : 'Tổng' }}</p>
             <div class="invoice-dots"></div>
             <p>
               ${{
@@ -232,6 +252,7 @@ import { JsonViewer } from 'vue3-json-viewer';
 import 'vue3-json-viewer/dist/index.css';
 import { v4 } from 'uuid';
 const log = ref('');
+const lang = ref(true);
 
 const order = ref({ items: [], price: 0 });
 const step = ref(1);
@@ -364,7 +385,7 @@ const foods = computed(() => {
 const items = {
   // Drinks
   coffee: {
-    name: 'Coffee',
+    name: lang.value ? 'Coffee' : 'Cà phê',
     key: 'coffee',
     img: 'https://img.icons8.com/fluency/48/vietnamese-coffee.png',
     type: 'drink',
@@ -373,14 +394,14 @@ const items = {
     addons: {},
   },
   milkTea: {
-    name: 'Milk Tea',
+    name: lang.value ? 'Milk Tea' : 'Trà sữa',
     key: 'milkTea',
     img: 'https://img.icons8.com/fluency/48/milkshake.png',
     type: 'drink',
     basePrice: 2.25,
     options: {
       milk: {
-        name: 'Milk',
+        name: lang.value ? 'Milk' : 'Sữa',
         key: 'milk',
         values: [
           { name: 'Whole milk', key: 'whole', price: 0 },
@@ -392,33 +413,41 @@ const items = {
   },
   // Foods
   sandwich: {
-    name: 'Sandwich',
+    name: lang.value ? 'Sandwich' : 'Bánh mì kẹp',
     key: 'sandwich',
     img: 'https://img.icons8.com/fluency/48/sandwich.png',
     type: 'food',
     basePrice: 3,
     options: {
       filling: {
-        name: 'Filling',
+        name: lang.value ? 'Filling' : 'Nhân',
         values: [
-          { name: 'Egg', key: 'egg', price: 1 },
-          { name: 'Turkey', key: 'turkey', price: 1 },
+          { name: lang.value ? 'Egg' : 'Trứng', key: 'egg', price: 1 },
+          {
+            name: lang.value ? 'Turkey' : 'Thịt gà tây',
+            key: 'turkey',
+            price: 1,
+          },
         ],
       },
     },
   },
   bagel: {
-    name: 'Bagel',
+    name: lang.value ? 'Bagel' : 'Bánh mì vòng',
     key: 'bagel',
     img: 'https://img.icons8.com/fluency/48/bagel.png',
     type: 'food',
     basePrice: 3,
     options: {
       spread: {
-        name: 'Spread',
+        name: lang.value ? 'Spread' : 'Kem phết',
         values: [
-          { name: 'Butter', key: 'butter', price: 0.5 },
-          { name: 'Cream cheese', key: 'creamChese', price: 0.5 },
+          { name: lang.value ? 'Butter' : 'Bơ', key: 'butter', price: 0.5 },
+          {
+            name: lang.value ? 'Cream cheese' : 'Kem phô mai',
+            key: 'creamChese',
+            price: 0.5,
+          },
         ],
       },
     },
@@ -427,16 +456,16 @@ const items = {
 
 const drinkOptions = {
   type: {
-    name: 'Type',
+    name: lang.value ? 'Type' : 'Loại',
     key: 'type',
     values: [
-      { name: 'Hot', key: 'hot', price: 0 },
-      { name: 'Cold', key: 'cold', price: 0 },
-      { name: 'Blended', key: 'blended', price: 1 },
+      { name: lang.value ? 'Hot' : 'Nóng', key: 'hot', price: 0 },
+      { name: lang.value ? 'Cold' : 'Lạnh', key: 'cold', price: 0 },
+      { name: lang.value ? 'Blended' : 'Hỗn hợp', key: 'blended', price: 1 },
     ],
   },
   size: {
-    name: 'Size',
+    name: lang.value ? 'Size' : 'Cỡ',
     key: 'size',
     values: [
       { name: 'S', key: 's', price: 0 },
