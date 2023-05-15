@@ -1,18 +1,473 @@
-<template></template>
+<template>
+  <ClientOnly>
+    <div id="main-wrap" class="">
+      <div class="header text-center">
+        <div v-if="order.items.length > 5">
+          <p>
+            You have ordered too many items. Please be aware of possible
+            bankruptcy.
+          </p>
+        </div>
+        <h1 class="mb-5 mt-20 app-title text-yellow-200">Wunder bar</h1>
+      </div>
+      <div class="content mx-auto w-fit flex gap-10">
+        <div class="item-details card">
+          <div class="nav flex justify-around items-center">
+            <div>
+              <img
+                v-if="step === 2"
+                @click="backStep"
+                width="32"
+                class="go-back cursor-pointer"
+                src="~/assets/img/arrow-left.png"
+              />
+              <img
+                v-else
+                @click="backStep"
+                width="32"
+                class="go-back cursor-pointer"
+                src="~/assets/img/arrow-left-white.png"
+              />
+            </div>
+            <div class="flex justify-center text-lg font-bold">
+              <div
+                class="step"
+                :class="{ active: step === 1, hidden: step !== 1 }"
+              >
+                <div class="text">Select item</div>
+              </div>
+              <div
+                class="step"
+                :class="{ active: step === 2, hidden: step !== 2 }"
+              >
+                <div class="text">Select options</div>
+              </div>
+            </div>
+            <div class="btn-wrapper plus-minus">
+              <img
+                v-if="step === 1"
+                @click="nextStep"
+                width="32"
+                class="go-next cursor-pointer"
+                src="~/assets/img/arrow-right.png"
+              />
+              <img
+                v-else
+                @click="backStep"
+                width="32"
+                class="go-back cursor-pointer"
+                src="~/assets/img/arrow-right-white.png"
+              />
+            </div>
+          </div>
+          <div class="step-1" v-show="step === 1">
+            <div class="menu">
+              <div class="menu-list drink">
+                <h3>Drinks</h3>
+                <div class="flex list-items">
+                  <div
+                    v-for="item in drinks"
+                    class="item"
+                    @click="selectItem(item)"
+                    :key="item.name"
+                  >
+                    <div v-if="item.type === 'drink'">
+                      <img
+                        width="48"
+                        height="48"
+                        :src="item.img"
+                        :alt="item.name"
+                        class="m-auto"
+                      />
+                      <label>{{ item.name }}</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="menu-list food">
+                <h3>Foods</h3>
+                <div class="list-items flex">
+                  <div
+                    v-for="item in foods"
+                    class="item"
+                    @click="selectItem(item)"
+                    :key="item.name"
+                  >
+                    <div v-if="item.type === 'food'">
+                      <img
+                        width="48"
+                        height="48"
+                        :src="item.img"
+                        :alt="item.name"
+                        class="m-auto"
+                      />
+                      <label>{{ item.name }}</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="step-2" v-show="step === 2">
+            <div class="options flex flex-col">
+              <div
+                v-for="option in currentItem.options"
+                :key="option.name"
+                :class="option.key"
+              >
+                <h4>{{ option.name }}</h4>
+                <div class="flex">
+                  <div
+                    v-for="value in option.values"
+                    :key="value.key"
+                    class="option flex flex-col border"
+                    @click="selectOption(option, value)"
+                    :data-tooltip="value.disabled ? value.tooltip : null"
+                  >
+                    <label>{{ value.name }}</label>
+                    <input
+                      type="radio"
+                      :name="option.name"
+                      :for="option.key"
+                      :disabled="value.disabled"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="addons flex flex-col">
+              <div
+                v-for="addon in currentItem.addons"
+                :key="addon.name"
+                :class="addon.key"
+              >
+                <h4>{{ addon.name }}</h4>
+                <div class="flex">
+                  <img :src="addon.img" />
+                  <div class="flex gap-3 items-center">
+                    <button
+                      @click="
+                        addon.quantity--;
+                        addon.logic();
+                      "
+                      class="plus-minus"
+                    >
+                      -
+                    </button>
+                    <p>{{ addon.quantity }}</p>
+                    <button
+                      @click="
+                        addon.quantity++;
+                        addon.logic();
+                      "
+                      class="plus-minus"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="add-item">
+              <button @click="addItem">Add item</button>
+            </div>
+          </div>
+        </div>
+        <div class="order-details border h-fit">
+          <div class="text-center">
+            <h1 class="text-xl font-bold">Check out</h1>
+          </div>
+          <div class="invoice-items">
+            <div v-for="item in order.items" :key="item.id" class="flex">
+              <p>{{ item.name }}</p>
+              <div class="invoice-dots"></div>
+              <p>${{ item.price }}</p>
+            </div>
+          </div>
+          <hr />
+          <div class="invoice-tax flex">
+            <p>Tax ({{ Math.floor(tax * 10000) / 100 }}%)</p>
+            <div class="invoice-dots"></div>
+            <p>
+              ${{
+                Math.floor(
+                  order.items.reduce((total, item) => total + item.price, 0) *
+                    tax *
+                    100
+                ) / 100
+              }}
+            </p>
+          </div>
+          <div class="invoice-total flex">
+            <p>Total</p>
+            <div class="invoice-dots"></div>
+            <p>
+              ${{
+                Math.floor(
+                  order.items.reduce((total, item) => total + item.price, 0) *
+                    (1 + tax) *
+                    100
+                ) / 100
+              }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="development py-5 hidden">
+        <!-- <p class="py-1">{{ log }}</p> -->
+        <JsonViewer
+          :value="order.items"
+          expanded
+          :expandDepth="10"
+          copyable
+          boxed
+          sort
+        />
+      </div>
+    </div>
+  </ClientOnly>
+</template>
 <script setup>
-const drinks = {
+import { JsonViewer } from 'vue3-json-viewer';
+import 'vue3-json-viewer/dist/index.css';
+import { v4 } from 'uuid';
+const log = ref('');
+
+const order = ref({ items: [], price: 0 });
+const step = ref(1);
+const currentItem = ref({ type: '' });
+log.value = currentItem;
+const tax = 0.0725;
+
+const addItem = () => {
+  const item = {
+    id: v4(),
+    name: currentItem.value.name,
+    price: currentItem.value.price,
+  };
+  order.value.items.push(item);
+  console.log(order._rawValue);
+  currentItem.value = { type: '' };
+  step.value = 1;
+};
+
+// MODULE: NAVIGATION
+const nextStep = () => {
+  if (!currentItem.value.type) return;
+  if (step.value === 2) return;
+  step.value++;
+};
+const backStep = () => {
+  if (step.value === 1) return;
+  step.value--;
+};
+
+// Step 1: Select item
+const selectItem = (item) => {
+  currentItem.value = item;
+
+  // Default values
+  if (item.type === 'drink') {
+    currentItem.value.options = {
+      ...currentItem.value.options,
+      ...drinkOptions,
+    };
+    currentItem.value.addons = {
+      ...currentItem.value.addons,
+      ...drinkAddons,
+    };
+  }
+  if (item.type === 'food') {
+    currentItem.value.options = {
+      ...currentItem.value.options,
+      ...foodOptions,
+    };
+    currentItem.value.addons = {
+      ...currentItem.value.addons,
+      ...foodAddons,
+    };
+  }
+
+  // Inintialize states
+  for (const key in currentItem.value.options) {
+    for (const value of currentItem.value.options[key].values) {
+      value.selected = false;
+    }
+  }
+  currentItem.value.price = computed(() => {
+    function calculateMarkup(options) {
+      let markup = 0;
+
+      // Loop through each option
+      for (const option in options) {
+        // Loop through each value within option
+        for (const valueKey in options[option].values) {
+          const value = options[option].values[valueKey];
+          // Check if the value is selected
+          if (value.selected) {
+            markup += value.price;
+          }
+        }
+      }
+      return markup;
+    }
+    return (
+      currentItem.value.basePrice +
+      JSON.parse(JSON.stringify(calculateMarkup(currentItem.value.options)))
+    );
+  });
+  step.value = 2;
+};
+
+// Hanlding wrong input
+let previous = null;
+const computedCurrentItem = computed(() => {
+  return JSON.parse(JSON.stringify(currentItem.value));
+});
+watch(
+  computedCurrentItem,
+  (newValue, oldValue) => {
+    // Previous values for reversion
+    previous = oldValue._rawValue;
+    // Error logics
+    if (newValue?.type === 'drink') {
+      if (newValue.options.size.values[2].selected == true) {
+        currentItem.value.options.type.values[0].disabled = true;
+        currentItem.value.options.type.values[0].selected = false;
+        currentItem.value.options.type.values[0].tooltip =
+          'L size is only available for cold and blended drinks';
+      } else {
+        currentItem.value.options.type.values[0].disabled = false;
+      }
+    }
+  },
+  {
+    deep: true,
+  }
+);
+
+// Step 2: Select options
+const selectOption = (option, value) => {
+  option.values.forEach((value) => (value.selected = false));
+  value.selected = true;
+};
+
+const drinks = computed(() => {
+  return Object.values(items).filter((item) => item.type === 'drink');
+});
+
+const foods = computed(() => {
+  return Object.values(items).filter((item) => item.type === 'food');
+});
+
+// MODULE: DATA
+const items = {
+  // Drinks
   coffee: {
     name: 'Coffee',
+    key: 'coffee',
+    img: 'https://img.icons8.com/fluency/48/vietnamese-coffee.png',
+    type: 'drink',
     basePrice: 2,
+    options: {},
+    addons: {},
+  },
+  milkTea: {
+    name: 'Milk Tea',
+    key: 'milkTea',
+    img: 'https://img.icons8.com/fluency/48/milkshake.png',
+    type: 'drink',
+    basePrice: 2.25,
     options: {
-      type: {
-        name: 'Type',
+      milk: {
+        name: 'Milk',
+        key: 'milk',
         values: [
-          { name: 'Hot', price: 0 },
-          { name: 'Cold', price: 0 },
-          { name: 'Blended', price: 1 },
+          { name: 'Whole milk', key: 'whole', price: 0 },
+          { name: 'Almond milk', key: 'almond', price: 0.5 },
         ],
       },
+    },
+    addons: {},
+  },
+  // Foods
+  sandwich: {
+    name: 'Sandwich',
+    key: 'sandwich',
+    img: 'https://img.icons8.com/fluency/48/sandwich.png',
+    type: 'food',
+    basePrice: 3,
+    options: {
+      filling: {
+        name: 'Filling',
+        values: [
+          { name: 'Egg', key: 'egg', price: 1 },
+          { name: 'Turkey', key: 'turkey', price: 1 },
+        ],
+      },
+    },
+  },
+  bagel: {
+    name: 'Bagel',
+    key: 'bagel',
+    img: 'https://img.icons8.com/fluency/48/bagel.png',
+    type: 'food',
+    basePrice: 3,
+    options: {
+      spread: {
+        name: 'Spread',
+        values: [
+          { name: 'Butter', key: 'butter', price: 0.5 },
+          { name: 'Cream cheese', key: 'creamChese', price: 0.5 },
+        ],
+      },
+    },
+  },
+};
+
+const drinkOptions = {
+  type: {
+    name: 'Type',
+    key: 'type',
+    values: [
+      { name: 'Hot', key: 'hot', price: 0 },
+      { name: 'Cold', key: 'cold', price: 0 },
+      { name: 'Blended', key: 'blended', price: 1 },
+    ],
+  },
+  size: {
+    name: 'Size',
+    key: 'size',
+    values: [
+      { name: 'S', key: 's', price: 0 },
+      { name: 'M', key: 'm', price: 0.5 },
+      { name: 'L', key: 'l', price: 1 },
+      { name: 'XL', key: 'xl', price: 1.5 },
+    ],
+  },
+};
+
+const foodOptions = {};
+const foodAddons = {};
+
+const drinkAddons = {
+  chocolate: {
+    name: 'Chocolate Sauce',
+    key: 'chocolate',
+    quantity: 0,
+    price: 0.5,
+    logic() {
+      if (this.quantity < 0) {
+        this.quantity = 0;
+      }
+      if (this.quantity > 6) {
+        this.quantity = 6;
+      }
+      if (this.quantity <= 2) {
+        this.price = 0;
+      } else {
+        this.price = 0.5 + (this.quantity - 2) * 0.5;
+      }
     },
   },
 };

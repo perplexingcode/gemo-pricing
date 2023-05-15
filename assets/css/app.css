@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Peachy Pure';
+  src: url('~/assets/font/Peachy-Pure.ttf') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: 'Original Surfer', cursive;
+  background: url('~/assets/img/background.jpg');
+  background-size: cover;
+}
+
+.app-title {
+  font-family: 'Peachy Pure', cursive;
+  font-size: 8rem;
+}
+
+.menu-list .item {
+  @apply border-solid border-2 border-gray-300 rounded-lg p-4 m-4 flex;
+}
+.menu-list .item:hover {
+  @apply border-solid border-2 bg-yellow-50 border-gray-200 rounded-lg p-4 m-4 flex;
+}
+
+.menu-list {
+  @apply border-solid border-2 border-cyan-800 m-2 p-1 rounded;
+}
+.card {
+  @apply p-2 bg-blue-50 w-fit rounded border-solid;
+}
+
+.border {
+  @apply border-2 border-gray-200 rounded m-2 p-2;
+}
+.item-details {
+  @apply border-yellow-300 rounded m-2 p-2;
+  border-width: 10px;
+}
+
+.size {
+  order: 1 !important;
+}
+.type {
+  order: 2 !important;
+}
+
+.options > div {
+  order: 9;
+}
+
+button {
+  @apply bg-cyan-800 text-white rounded p-2 m-2;
+}
+
+.order-details {
+  width: 200px;
+}
+
+.invoice-tax > *:first-child {
+  width: 500px;
+}
+
+.invoice-dots {
+  @apply mx-1 mb-2;
+  border-bottom: 1px dotted black;
+  width: 100%;
+}
+
+/* Tooltip */
+[data-tooltip]::before {
+  /* needed - do not touch */
+  content: attr(data-tooltip);
+  position: absolute;
+  opacity: 0;
+
+  /* customizable */
+  transition: all 0.15s ease;
+  padding: 10px;
+  color: #333;
+  border-radius: 10px;
+  box-shadow: 2px 2px 1px silver;
+}
+
+[data-tooltip]:hover::before {
+  /* needed - do not touch */
+  opacity: 1;
+
+  /* customizable */
+  background: yellow;
+  margin-top: -50px;
+  margin-left: 20px;
+}
+
+[data-tooltip]:not([data-tooltip-persistent])::before {
+  pointer-events: none;
+}
