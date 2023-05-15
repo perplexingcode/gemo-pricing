@@ -20,6 +20,13 @@ body {
   font-size: 8rem;
 }
 
+@media (max-width: 640px) {
+  .app-title {
+    line-height: 1;
+    font-size: 6rem;
+  }
+}
+
 .menu-list .item {
   @apply border-solid border-2 border-gray-300 rounded-lg p-4 m-4 flex;
 }

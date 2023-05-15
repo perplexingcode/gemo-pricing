@@ -22,7 +22,7 @@
         </div>
         <h1 class="mb-5 mt-20 app-title text-yellow-200">Wunder bar</h1>
       </div>
-      <div class="content mx-auto w-fit flex gap-10">
+      <div class="content mx-auto w-fit flex gap-10 flex-col sm:flex-row">
         <div class="item-details card">
           <div class="nav flex justify-around items-center">
             <div>
