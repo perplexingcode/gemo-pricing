@@ -468,9 +468,15 @@ import { v4 } from 'uuid';
 import dict from '~/static/dictionary.js';
 //<< DEV
 const log = ref('');
-const development = ref(true);
+const development = ref(false);
 const testVar = ref(0);
 // >>
+
+onMounted(() => {
+  if (window.location.search === '?dev') {
+    development.value = true;
+  }
+});
 
 // MULTI LANGUAGE
 const langCodeImg = computed(() => {
