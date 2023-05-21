@@ -231,7 +231,7 @@
                   </p>
                   <div class="text-xs ml-1" v-html="addon.description"></div>
                   <p class="text-xs ml-1 price" v-if="addon.quantity">
-                    {{ 'Total: $' + addon.price }}
+                    {{ lang('total').value + ': $' + addon.price }}
                   </p>
                   <div class="flex">
                     <img :src="addon.img" />
