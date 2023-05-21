@@ -342,11 +342,13 @@
             v-if="session.status == 'ordering'"
             class="flex flex-col customer"
           >
+            <label class="pl-4 pt-1">{{ lang('name').value }}</label>
             <input
               class="customer-name"
               v-model="session.customer"
               :placeholder="lang('yourName').value"
             />
+            <label class="pl-4 pt-1">{{ lang('table').value }}</label>
             <select v-model="session.table">
               <option disabled value="">{{ lang('yourTable').value }}</option>
               <option value="1">1</option>
