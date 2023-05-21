@@ -87,6 +87,10 @@ export default {
     EN: 'Milk Tea',
     VN: 'Trà sữa',
   },
+  name: {
+    EN: 'Name',
+    VN: 'Tên khách hàng',
+  },
   no: {
     EN: 'No',
     VN: 'Không',
@@ -111,6 +115,10 @@ export default {
     EN: 'Order completed. Please come to the counter to pick up your order.',
     VN: 'Món ăn đã sẵn sàng. Vui lòng tới quầy để nhận món.',
   },
+  orderDoneTitle: {
+    EN: 'Order completed.',
+    VN: 'Đơn đã hoàn thành.',
+  },
   orderNew: {
     EN: 'Place new order',
     VN: 'Đặt đơn mới',
@@ -122,6 +130,10 @@ export default {
   orderProcessing: {
     EN: 'Your order is being prepared...',
     VN: 'Quầy bếp đang thực hiện đơn hàng...',
+  },
+  orderProcessingButton: {
+    EN: 'Processing order...',
+    VN: 'Đang chế biến...',
   },
   sandwich: {
     EN: 'Sandwich',
@@ -142,6 +154,10 @@ export default {
   spread: {
     EN: 'Spread',
     VN: 'Phết',
+  },
+  table: {
+    EN: 'Table',
+    VN: 'Bàn',
   },
   tax: {
     EN: 'Tax',

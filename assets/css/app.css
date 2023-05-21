@@ -33,6 +33,7 @@ body {
 .menu-list .item {
   @apply border-solid border-2 border-gray-300 rounded-lg p-4 m-4 flex;
 }
+
 .menu-list .item:hover {
   @apply outline outline-4 outline-teal-400 rounded-lg p-4 m-4 flex;
   outline-offset: -4px;
@@ -51,6 +52,14 @@ body {
 .item-details {
   @apply border-yellow-300 rounded m-2 p-2;
   border-width: 10px;
+}
+
+.item,
+.item label,
+.option,
+.option input[type='radio'],
+.option label {
+  cursor: pointer;
 }
 
 .size {
@@ -83,10 +92,10 @@ select {
   @apply border-2 border-teal-800 rounded p-2;
 }
 
-.cancel-button {
+.btn-cancel {
   @apply bg-gray-500 text-white rounded;
 }
-.cancel-button:hover {
+.btn-cancel:hover {
   @apply bg-red-500 text-white rounded;
 }
 

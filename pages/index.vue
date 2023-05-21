@@ -187,11 +187,15 @@
                   :class="option.key"
                 >
                   <h4 class="ml-1">{{ option.name }}</h4>
-                  <div class="flex text-center">
+                  <div
+                    class="flex text-center option-radios"
+                    :class="option.key"
+                  >
                     <div
                       v-for="value in option.values"
                       :key="value.key"
                       class="option flex flex-col border"
+                      :class="value.key"
                       @click="selectOption(option, value)"
                       :data-tooltip="value.disabled ? value.tooltip : null"
                     >
@@ -267,25 +271,48 @@
           <div class="invoice">
             <div class="border h-fit">
               <div class="text-center">
-                <h1 v-if="orderStatus == 'ordering'" class="text-xl font-bold">
+                <h1
+                  v-if="session.status == 'ordering'"
+                  class="text-xl font-bold"
+                >
                   {{ lang('checkout').value }}
                 </h1>
                 <h1
                   v-if="
-                    orderStatus == 'processing' || orderStatus == 'received'
+                    session.status == 'processing' ||
+                    session.status == 'received'
                   "
                   class="text-xl font-bold"
                 >
                   {{ lang('orderPlaced').value }}
                 </h1>
+                <h1
+                  v-if="session.status == 'cancelled'"
+                  class="text-xl font-bold"
+                >
+                  {{ lang('orderCancelled').value }}
+                </h1>
+                <h1 v-if="session.status == 'done'" class="text-xl font-bold">
+                  {{ lang('orderDoneTitle').value }}
+                </h1>
               </div>
               <div class="invoice-items">
-                <div v-for="item in order.items" :key="item.id" class="flex">
+                <div
+                  v-for="(item, index) in session.order.items"
+                  :key="item.id"
+                  class="flex"
+                >
                   <div class="invoice-item-name">
                     <p>{{ item.name }}</p>
                   </div>
                   <div class="invoice-dots"></div>
                   <p>${{ item.price }}</p>
+                  <p
+                    @click="session.order.items.splice(index, 1)"
+                    class="pl-2 cursor-pointer"
+                  >
+                    X
+                  </p>
                 </div>
               </div>
               <hr />
@@ -300,42 +327,27 @@
                 <div class="invoice-dots"></div>
                 <p>
                   ${{
-                    Math.floor(
-                      order.items.reduce(
-                        (total, item) => total + item.price,
-                        0
-                      ) *
-                        tax *
-                        100
-                    ) / 100
+                    Math.floor(session.order.priceBeforeTax * tax * 100) / 100
                   }}
                 </p>
               </div>
               <div class="invoice-total flex">
                 <p>{{ lang('total').value }}</p>
                 <div class="invoice-dots"></div>
-                <p>
-                  ${{
-                    Math.floor(
-                      order.items.reduce(
-                        (total, item) => total + item.price,
-                        0
-                      ) *
-                        (1 + tax) *
-                        100
-                    ) / 100
-                  }}
-                </p>
+                <p>${{ session.order.price }}</p>
               </div>
             </div>
           </div>
-          <div v-if="orderStatus == 'ordering'" class="flex flex-col customer">
+          <div
+            v-if="session.status == 'ordering'"
+            class="flex flex-col customer"
+          >
             <input
               class="customer-name"
-              v-model="customer.name"
+              v-model="session.customer"
               :placeholder="lang('yourName').value"
             />
-            <select v-model="customer.table">
+            <select v-model="session.table">
               <option disabled value="">{{ lang('yourTable').value }}</option>
               <option value="1">1</option>
               <option value="2">2</option>
@@ -350,45 +362,59 @@
             </select>
           </div>
           <div
-            v-if="orderStatus == 'processing' || orderStatus == 'received'"
+            v-if="
+              session.status == 'processing' ||
+              session.status == 'received' ||
+              session.status == 'done' ||
+              session.status == 'cancelled'
+            "
             class="pl-3"
           >
-            <p>Table: {{ customer.table }}</p>
-            <p>Name: {{ customer.name }}</p>
+            <p>{{ lang('table').value }}: {{ session.table }}</p>
+            <p>{{ lang('name').value }}: {{ session.customer }}</p>
           </div>
           <div class="text-center">
             <button
-              v-if="orderStatus == 'ordering'"
+              v-if="session.status == 'ordering'"
               @click="placeOrder"
-              :disabled="customer.table === '' || order.items.length === 0"
+              :disabled="
+                session.table === '' || session.order.items.length === 0
+              "
             >
               {{ lang('order').value }}
             </button>
             <button
-              v-if="orderStatus == 'processing' || orderStatus == 'received'"
-              @click="showCancelConfirm = true"
-              class="cancel-button"
+              v-if="session.status == 'received'"
+              @click="UI.cancelConfirm = true"
+              class="btn-cancel"
             >
               {{ lang('orderCancel').value }}
             </button>
             <button
-              v-if="orderStatus == 'cancelled'"
+              v-if="session.status == 'processing'"
+              disabled
+              class="btn-processing"
+            >
+              {{ lang('orderProcessingButton').value }}
+            </button>
+            <button
+              v-if="session.status == 'cancelled' || session.status == 'done'"
               @click="newOrder"
               class="btn-new-order"
             >
               {{ lang('orderNew').value }}
             </button>
-            <div v-if="showCancelConfirm" class="cancel-confirm">
+            <div v-if="UI.cancelConfirm" class="cancel-confirm">
               <p>{{ lang('orderCancelConfirm').value }}</p>
               <button
                 @click="
                   cancelOrder();
-                  showCancelConfirm = false;
+                  UI.cancelConfirm = false;
                 "
               >
                 {{ lang('orderCancel').value }}
               </button>
-              <button @click="showCancelConfirm = false">
+              <button @click="UI.cancelConfirm = false">
                 {{ lang('goBack').value }}
               </button>
             </div>
@@ -396,10 +422,10 @@
         </div>
       </div>
       <div v-if="development" class="development py-5 card">
-        <p class="py-1">{{ orderStatus }}</p>
+        <p class="py-1">{{ session.status }}</p>
         <div class="flex">
-          <h3>order</h3>
-          <JsonViewer :value="order" :expandDepth="10" copyable boxed sort />
+          <h3>session</h3>
+          <JsonViewer :value="session" :expandDepth="10" copyable boxed sort />
           <h3>order backend</h3>
           <JsonViewer
             :value="orderBackend"
@@ -418,9 +444,9 @@
             boxed
             sort
           />
-          <h3>sessionData</h3>
+          <h3>session.order</h3>
           <JsonViewer
-            :value="sessionData"
+            :value="session.order"
             :expandDepth="10"
             copyable
             boxed
@@ -446,8 +472,7 @@ const development = ref(true);
 const testVar = ref(0);
 // >>
 
-const tax = 0.0725;
-
+// MULTI LANGUAGE
 const langCodeImg = computed(() => {
   const langCodeImgs = {
     EN: 'usa',
@@ -463,8 +488,7 @@ const toggleLanguage = () => {
   languages.push(langCode.value);
   langCode.value = languages[0];
 };
-
-const lang = function (key, isTemplate) {
+const lang = function (key) {
   try {
     return computed(() => dict[key][langCode.value]);
   } catch (error) {
@@ -472,34 +496,76 @@ const lang = function (key, isTemplate) {
   }
 };
 
-const notifications = ref([{ id: 'ok' }]);
-
-const customer = ref({ name: '', table: '' });
-
 // API
 const lockerOrder = 'wunderbar_order';
 const lockerSession = 'wunderbar_session';
 const apiUrl =
   'https://vq4h0iro9k.execute-api.ap-southeast-1.amazonaws.com/locker';
-function updateOrder(order) {
-  fetch(apiUrl + '/upsert/' + lockerOrder, {
-    method: 'POST',
-    headers: new Headers({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(order),
-  });
-}
 
 // SESSION
 const session = reactive({
   id: '',
   customer: '',
   table: '',
-  status: '',
-  order: {},
+  status: 'ordering',
+  order: { items: [], price: 0, priceBeforeTax: 0 },
 });
+// Sync session with cloud
+watch(
+  () => session,
+  () => {
+    session.order.price =
+      Math.floor(
+        session.order.items.reduce((total, item) => total + item.price, 0) *
+          (1 + tax) *
+          100
+      ) / 100;
+    session.order.priceBeforeTax =
+      Math.floor(
+        session.order.items.reduce((total, item) => total + item.price, 0) * 100
+      ) / 100;
+
+    // Make description
+    let description = '';
+    for (let i = 0; i < session.order.items.length; i++) {
+      // Make description
+      const item = session.order.items[i];
+      description += '{ ' + (+i + 1) + ' | ' + item.name + ' | ';
+      const options = [];
+
+      // Read options
+      for (const optionKey in item.options) {
+        const option = item.options[optionKey];
+        const selectedValues = option.values.filter((value) => value.selected);
+        if (selectedValues.length > 0) {
+          const optionKey = option.name;
+          let optionValue = '';
+          for (let i = 0; i < selectedValues.length; i++) {
+            const selectedValue = selectedValues[i];
+            optionValue = '(' + selectedValue.name + ')';
+          }
+          options.push(optionKey + '=' + optionValue);
+        }
+      }
+      // Read addons
+      for (const addonKey in item.addons) {
+        const addon = item.addons[addonKey];
+        if (addon.quantity > 0) {
+          options.push('(' + addon.name + ')x' + addon.quantity);
+        }
+      }
+      description += options.join(' ');
+      description += ' } \n';
+    }
+    session.order.description = description;
+    //
+    updateCloudSession();
+  },
+  { deep: true }
+);
 //
 onMounted(async () => {
-  const cloudSession = await getSessionData();
+  const cloudSession = await getCloudSession();
   if (!cloudSession.id) {
     session.id = v4();
     session.status = 'ordering';
@@ -512,7 +578,7 @@ onMounted(async () => {
   session.order = cloudSession.order;
 });
 //
-async function updateSessionData() {
+async function updateCloudSession() {
   await fetch(apiUrl + '/upsert/' + lockerSession, {
     method: 'POST',
     headers: new Headers({ 'Content-Type': 'application/json' }),
@@ -520,207 +586,32 @@ async function updateSessionData() {
   });
 }
 
-async function getSessionData() {
+async function getCloudSession() {
   const response = await fetch(apiUrl + '/get/' + lockerSession);
   const _cloudSession = await response.json();
-  console.log(_cloudSession);
+
   return _cloudSession;
 }
-//
-
-const order = ref({ items: [], price: 0, customer: '' });
+// UI
+const notifications = ref([{ id: 'ok' }]);
+const UI = reactive({
+  cancelConfirm: false,
+  warnTooManyItems: false,
+});
 
 // :P
-const warnTooManyItems = ref(false);
 watchEffect(() => {
-  if (order.value.items.length > 5 && !warnTooManyItems.value) {
+  if (session.order.items.length > 5 && !UI.warnTooManyItems) {
     notifications.value.push(lang('tooManyItems'));
   }
 });
 
-const orderBackend = computed(() => {
-  if (order.value.items.length === 0) {
-    return {};
-  }
-  let description = '';
-  let price = 0;
-  for (let i = 0; i < order.value.items.length; i++) {
-    // Make description
-    const item = order.value.items[i];
-    description += '{ ' + (+i + 1) + ' | ' + item.name + ' | ';
-    const options = [];
-
-    // Read options
-    for (const optionKey in item.options) {
-      const option = item.options[optionKey];
-      const selectedValues = option.values.filter((value) => value.selected);
-      if (selectedValues.length > 0) {
-        const optionKey = option.name;
-        let optionValue = '';
-        for (let i = 0; i < selectedValues.length; i++) {
-          const selectedValue = selectedValues[i];
-          optionValue = '(' + selectedValue.name + ')';
-        }
-        options.push(optionKey + '=' + optionValue);
-      }
-    }
-    // Read addons
-    for (const addonKey in item.addons) {
-      const addon = item.addons[addonKey];
-      if (addon.quantity > 0) {
-        options.push('(' + addon.name + ')x' + addon.quantity);
-      }
-    }
-    description += options.join(' ');
-    description += ' } \n';
-
-    // Calculate price
-    price += item.price;
-  }
-  log.value = description;
-  return {
-    id: currentOrderId.value,
-    description,
-    customer: customer.value.name,
-    table: customer.value.table,
-    price: Math.floor(price * (1 + tax) * 100) / 100,
-    status: orderStatus.value || 'ordering',
-    sessionData: {
-      order: order.value,
-      customer: ref(customer.value),
-    },
-  };
-});
-
-// DATA
-
-// ORDER
-async function getOrderStatus() {
-  console.log('Getting order status...');
-  const response = await fetch(apiUrl + '/get/' + lockerOrder);
-  const order = await response.json();
-  console.log(orderStatus.value, order);
-  if (order.status === 'processsing' && orderStatus.value !== 'processing') {
-    notifications.value.push(lang('orderProcessing'));
-    orderStatus.value = 'processing';
-  }
-  if (order.status === 'done' && orderStatus.value !== 'done') {
-    notifications.value.push(lang('orderCompleted'));
-    orderStatus.value = 'done';
-  }
-  orderStatus.value = order.status;
-}
-
-setInterval(async function () {
-  while (testVar < 10) {
-    await getOrderStatus();
-    testVar++;
-  }
-}, 2000);
-
-onMounted(async () => {
-  const response = await fetch(apiUrl + '/get/' + lockerOrder);
-  const _order = await response.json();
-  console.log('danchoi', _order);
-  if (_order.sessionData) {
-    order.value = _order.sessionData.order;
-    orderStatus.value = _order.status;
-    currentOrderId.value = _order.id;
-    customer.value.name = _order.sessionData.customer.name;
-  } else {
-    order.value = { items: [], price: 0, customer: '' };
-    currentOrderId.value = v4();
-  }
-});
-
-const addItem = () => {
-  if (!optionsSelected.value) return;
-  const item = {
-    id: v4(),
-    name: currentItem.value.name,
-    price: currentItem.value.price,
-    options: currentItem.value.options,
-    addons: currentItem.value.addons,
-  };
-  order.value.items.push(item);
-  // Reset currentItem
-  currentItem.value = { type: '' };
-  step.value = 1;
-
-  // Update session data
-  updateSessionData(sessionData.value);
-  updateOrder(orderBackend.value);
-};
-
-const showCancelConfirm = ref(false);
-
-function cancelOrder() {
-  updateOrder({
-    id: currentOrderId.value,
-    status: 'cancelled',
-    sessionData: { customer: customer.value.name, table: customer.value.table },
-  });
-  notifications.value.push(lang('orderCancelled'));
-}
-
-const placeOrder = function () {
-  if (order.value.items.length === 0) return;
-  orderStatus.value = 'received';
-  orderBackend.value.status = 'received';
-  orderBackend.value.sessionData.order = order.value;
-  orderBackend.value.sessionData.table = customer.value.table;
-  orderBackend.value.sessionData.customer = customer.value.name;
-  currentOrderId.value = orderBackend.value.id;
-  // updateOrder(orderBackend.value);
-  console.log(orderBackend.value);
-  notifications.value.push(lang('orderPlaced'));
-};
-
-const newOrder = function () {
-  updateOrder({
-    id: v4(),
-    status: 'ordering',
-    sessionData: {
-      customer: order.value.customer,
-      items: [],
-      table: order.value.table,
-    },
-  });
-  orderStatus.value = 'ordering';
-};
-
-const step = ref(1);
+// CART (CURRENT ITEM. BUILDING ITEM, VALIDATION, ADD ITEM)
 const currentItem = ref({ type: '' });
-log.value = currentItem;
 
-const optionsSelected = ref(false); // Initialize with a default value
+// Building item
+const step = ref(1);
 
-watch(
-  () => {
-    const options = currentItem.value.options;
-    for (const optionKey in options) {
-      const option = options[optionKey];
-      const selectedValues = option.values.filter((value) => value.selected);
-
-      if (selectedValues.length === 0) {
-        optionsSelected.value = false; // At least one option does not have a selected value
-        return;
-      }
-    }
-
-    optionsSelected.value = true; // All options have at least one selected value
-  },
-  { immediate: true }
-);
-
-const resetOptions = () => {
-  const radios = document.querySelectorAll('input[type="radio"]');
-  radios.forEach((radio) => {
-    radio.checked = false;
-  });
-};
-
-// NAVIGATION
 const nextStep = () => {
   if (!currentItem.value.type) return;
   if (step.value === 2) return;
@@ -729,6 +620,13 @@ const nextStep = () => {
 const backStep = () => {
   if (step.value === 1) return;
   step.value--;
+};
+
+const resetOptions = () => {
+  const radios = document.querySelectorAll('input[type="radio"]');
+  radios.forEach((radio) => {
+    radio.checked = false;
+  });
 };
 
 // Step 1: Select item
@@ -803,17 +701,48 @@ const selectItem = (item) => {
   step.value = 2;
 };
 
-// Hanlding wrong input
-let previous = null;
+const optionsSelected = ref(false); // Initialize with a default value
+watch(
+  () => {
+    const options = currentItem.value.options;
+    for (const optionKey in options) {
+      const option = options[optionKey];
+      const selectedValues = option.values.filter((value) => value.selected);
+
+      if (selectedValues.length === 0) {
+        optionsSelected.value = false; // At least one option does not have a selected value
+        return;
+      }
+    }
+
+    optionsSelected.value = true; // All options have at least one selected value
+  },
+  { immediate: true }
+);
+
+const addItem = () => {
+  if (!optionsSelected.value) return;
+  const item = {
+    id: v4(),
+    name: currentItem.value.name,
+    price: currentItem.value.price,
+    options: currentItem.value.options,
+    addons: currentItem.value.addons,
+  };
+  session.order.items.push(item);
+  // Reset currentItem
+  currentItem.value = { type: '' };
+  step.value = 1;
+};
+
+// Validation
 const computedCurrentItem = computed(() => {
   return JSON.parse(JSON.stringify(currentItem.value));
 });
 watch(
   computedCurrentItem,
   (newValue, oldValue) => {
-    // Previous values for reversion
-    previous = oldValue._rawValue;
-    // Error logics
+    // L size is only available for cold and blended drinks
     if (newValue?.type === 'drink') {
       if (newValue.options.size.values[2].selected == true) {
         currentItem.value.options.type.values[0].disabled = true;
@@ -824,6 +753,7 @@ watch(
         currentItem.value.options.type.values[0].disabled = false;
       }
     }
+    //
   },
   {
     deep: true,
@@ -832,10 +762,95 @@ watch(
 
 // Step 2: Select options
 const selectOption = (option, value) => {
+  // Reset all values
   option.values.forEach((value) => (value.selected = false));
+  const radios = document.querySelectorAll(
+    '.option-radios' + '.' + option.key + ' input'
+  );
+
+  radios.forEach((radio) => {
+    radio.checked = false;
+  });
+
+  // Select value
   value.selected = true;
+  const radio = document.querySelector('.option' + '.' + value.key + ' input');
+  radio.checked = true;
 };
 
+// ORDER
+const tax = 0.0725;
+const orderBackend = computed(() => {
+  if (session.order.items.length === 0) {
+    return {};
+  }
+  return {
+    id: session.id,
+    description: session.order.description,
+    customer: session.customer,
+    table: session.table,
+    price: session.order.price,
+    status: session.status,
+  };
+});
+
+async function getOrderStatus() {
+  // Expect: orderId and status from cashier side
+
+  const response = await fetch(apiUrl + '/get/' + lockerOrder);
+  const order = await response.json();
+  console.log(order);
+  console.log();
+  if (order.status === 'processing' && session.status !== 'processing') {
+    notifications.value.push(lang('orderProcessing'));
+    session.status = 'processing';
+    console.log(session.status);
+  }
+  if (order.status === 'done' && session.status !== 'done') {
+    notifications.value.push(lang('orderCompleted'));
+    session.status = 'done';
+  }
+}
+
+setInterval(async function () {
+  await getOrderStatus();
+  while (testVar < 10) {
+    await getOrderStatus();
+    if (!development.value) {
+      testVar++;
+    }
+  }
+}, 2000);
+
+function updateOrder() {
+  fetch(apiUrl + '/upsert/' + lockerOrder, {
+    method: 'POST',
+    headers: new Headers({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(orderBackend.value),
+  });
+}
+
+const placeOrder = function () {
+  if (session.order.items.length === 0) return;
+  session.status = 'received';
+  updateOrder();
+  notifications.value.push(lang('orderPlaced'));
+};
+
+function cancelOrder() {
+  session.status = 'cancelled';
+  updateOrder();
+  notifications.value.push(lang('orderCancelled'));
+}
+
+const newOrder = function () {
+  session.id = v4();
+  session.status = 'ordering';
+  session.order.items = [];
+  updateOrder();
+};
+
+// MODULE: DATA
 const drinks = computed(() => {
   return Object.values(items).filter((item) => item.type === 'drink');
 });
@@ -843,8 +858,6 @@ const drinks = computed(() => {
 const foods = computed(() => {
   return Object.values(items).filter((item) => item.type === 'food');
 });
-
-// MODULE: DATA
 const items = {
   // Drinks
   coffee: {
