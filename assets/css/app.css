@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
+
 @font-face {
   font-family: 'Peachy Pure';
   src: url('~/assets/font/Peachy-Pure.ttf') format('woff2');
@@ -10,7 +12,8 @@
 }
 
 body {
-  font-family: 'Original Surfer', cursive;
+  /* font-family: 'Original Surfer', cursive; */
+  font-family: 'Comfortaa', cursive;
   background: url('~/assets/img/background.jpg');
   background-size: cover;
 }
@@ -23,7 +26,7 @@ body {
 @media (max-width: 640px) {
   .app-title {
     line-height: 1;
-    font-size: 6rem;
+    font-size: 23vw;
   }
 }
 
@@ -31,7 +34,8 @@ body {
   @apply border-solid border-2 border-gray-300 rounded-lg p-4 m-4 flex;
 }
 .menu-list .item:hover {
-  @apply border-solid border-2 bg-yellow-50 border-gray-200 rounded-lg p-4 m-4 flex;
+  @apply outline outline-4 outline-teal-400 rounded-lg p-4 m-4 flex;
+  outline-offset: -4px;
 }
 
 .menu-list {
@@ -63,13 +67,90 @@ body {
 button {
   @apply bg-cyan-800 text-white rounded p-2 m-2;
 }
-
-.order-details {
-  width: 200px;
+button:disabled {
+  @apply bg-cyan-700 rounded p-2 m-2 text-cyan-500;
 }
 
-.invoice-tax > *:first-child {
-  width: 500px;
+.customer input,
+.customer select {
+  margin-left: 1rem;
+  margin-right: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+input,
+select {
+  @apply border-2 border-teal-800 rounded p-2;
+}
+
+.cancel-button {
+  @apply bg-gray-500 text-white rounded;
+}
+.cancel-button:hover {
+  @apply bg-red-500 text-white rounded;
+}
+
+.cancel-confirm {
+  position: fixed;
+  top: 50vh;
+  right: 50vw;
+  @apply bg-yellow-300 p-5 border-2 border-green-950 rounded;
+}
+
+@media (max-width: 640px) {
+  .cancel-confirm {
+    width: 60vw;
+    top: calc(50vh - 100px);
+    left: calc(50vw - 100px);
+  }
+}
+
+/* Current Item */
+
+.item.active {
+  @apply outline outline-4 outline-teal-400;
+  outline-offset: -4px;
+}
+
+.current-item {
+  position: absolute;
+  top: 2rem;
+  left: calc(100% + 1.25rem);
+  white-space: nowrap;
+}
+
+.current-item:active {
+  @apply outline-yellow-400;
+}
+
+.item-details {
+  position: relative;
+}
+
+@media (min-width: 640px) {
+  .item-details {
+    margin-right: 7.75rem;
+    margin-left: -6rem;
+  }
+}
+
+/* Order details */
+.invoice {
+  width: 300px;
+}
+
+@media (max-width: 640px) {
+  .invoice {
+    width: 100%;
+  }
+}
+
+.invoice-item-name {
+  white-space: nowrap;
+}
+.invoice-item-name p {
+  word-wrap: break-word;
+  max-width: 100px;
 }
 
 .invoice-dots {
