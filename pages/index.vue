@@ -845,8 +845,11 @@ function cancelOrder() {
 
 const newOrder = function () {
   session.id = v4();
+  console.log(session.status !== 'cancelled');
+  if (session.status !== 'cancelled') {
+    session.order.items = [];
+  }
   session.status = 'ordering';
-  session.order.items = [];
   updateOrder();
 };
 
