@@ -272,27 +272,27 @@
             <div class="border h-fit">
               <div class="text-center">
                 <h1
-                  v-if="session.status == 'ordering'"
+                  v-if="session.status == 'Ordering'"
                   class="text-xl font-bold"
                 >
                   {{ lang('checkout').value }}
                 </h1>
                 <h1
                   v-if="
-                    session.status == 'processing' ||
-                    session.status == 'received'
+                    session.status == 'Processing' ||
+                    session.status == 'Received'
                   "
                   class="text-xl font-bold"
                 >
                   {{ lang('orderPlaced').value }}
                 </h1>
                 <h1
-                  v-if="session.status == 'cancelled'"
+                  v-if="session.status == 'Cancelled'"
                   class="text-xl font-bold"
                 >
                   {{ lang('orderCancelled').value }}
                 </h1>
-                <h1 v-if="session.status == 'done'" class="text-xl font-bold">
+                <h1 v-if="session.status == 'Done'" class="text-xl font-bold">
                   {{ lang('orderDoneTitle').value }}
                 </h1>
               </div>
@@ -339,7 +339,7 @@
             </div>
           </div>
           <div
-            v-if="session.status == 'ordering'"
+            v-if="session.status == 'Ordering'"
             class="flex flex-col customer"
           >
             <label class="pl-4 pt-1">{{ lang('name').value }}</label>
@@ -365,10 +365,10 @@
           </div>
           <div
             v-if="
-              session.status == 'processing' ||
-              session.status == 'received' ||
-              session.status == 'done' ||
-              session.status == 'cancelled'
+              session.status == 'Processing' ||
+              session.status == 'Received' ||
+              session.status == 'Done' ||
+              session.status == 'Cancelled'
             "
             class="pl-3"
           >
@@ -377,7 +377,7 @@
           </div>
           <div class="text-center">
             <button
-              v-if="session.status == 'ordering'"
+              v-if="session.status == 'Ordering'"
               @click="placeOrder"
               :disabled="
                 session.table === '' || session.order.items.length === 0
@@ -386,21 +386,21 @@
               {{ lang('order').value }}
             </button>
             <button
-              v-if="session.status == 'received'"
+              v-if="session.status == 'Received'"
               @click="UI.cancelConfirm = true"
               class="btn-cancel"
             >
               {{ lang('orderCancel').value }}
             </button>
             <button
-              v-if="session.status == 'processing'"
+              v-if="session.status == 'Processing'"
               disabled
               class="btn-processing"
             >
               {{ lang('orderProcessingButton').value }}
             </button>
             <button
-              v-if="session.status == 'cancelled' || session.status == 'done'"
+              v-if="session.status == 'Cancelled' || session.status == 'Done'"
               @click="newOrder"
               class="btn-new-order"
             >
@@ -515,7 +515,7 @@ const session = reactive({
   id: '',
   customer: '',
   table: '',
-  status: 'ordering',
+  status: 'Ordering',
   order: { items: [], price: 0, priceBeforeTax: 0 },
 });
 // Sync session with cloud
@@ -576,7 +576,7 @@ onMounted(async () => {
   const cloudSession = await getCloudSession();
   if (!cloudSession.id) {
     session.id = v4();
-    session.status = 'ordering';
+    session.status = 'Ordering';
     return;
   }
   session.id = cloudSession.id;
@@ -808,14 +808,14 @@ async function getOrderStatus() {
   const response = await fetch(apiUrl + '/get/' + lockerOrder);
   const order = await response.json();
   if (development.value) console.log(order);
-  if (order.status === 'processing' && session.status !== 'processing') {
+  if (order.status === 'Processing' && session.status !== 'Processing') {
     notifications.value.push(lang('orderProcessing'));
-    session.status = 'processing';
+    session.status = 'Processing';
     console.log(session.status);
   }
-  if (order.status === 'done' && session.status !== 'done') {
+  if (order.status === 'Done' && session.status !== 'Done') {
     notifications.value.push(lang('orderCompleted'));
-    session.status = 'done';
+    session.status = 'Done';
   }
 }
 
@@ -838,7 +838,7 @@ function updateOrder() {
 
 const placeOrder = function () {
   if (session.order.items.length === 0) return;
-  session.status = 'received';
+  session.status = 'Received';
   // Add GMT+7 timestamp to order format yyyy-mm-dd hh:mm:ss
   orderBackend.value.timeStamp = new Date(
     new Date().getTime() + 7 * 60 * 60 * 1000
@@ -852,18 +852,18 @@ const placeOrder = function () {
 };
 
 function cancelOrder() {
-  session.status = 'cancelled';
+  session.status = 'Cancelled';
   updateOrder();
   notifications.value.push(lang('orderCancelled'));
 }
 
 const newOrder = function () {
   session.id = v4();
-  console.log(session.status !== 'cancelled');
-  if (session.status !== 'cancelled') {
+  console.log(session.status !== 'Cancelled');
+  if (session.status !== 'Cancelled') {
     session.order.items = [];
   }
-  session.status = 'ordering';
+  session.status = 'Ordering';
   updateOrder();
 };
 
