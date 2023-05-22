@@ -424,6 +424,7 @@
         </div>
       </div>
       <div v-if="development" class="development py-5 card">
+        <button @click="resetSession">Reset session</button>
         <p class="py-1">{{ session.status }}</p>
         <div class="flex">
           <h3>session</h3>
@@ -518,6 +519,18 @@ const session = reactive({
   status: 'Ordering',
   order: { items: [], price: 0, priceBeforeTax: 0 },
 });
+
+// DEV : Reset sesssion
+const resetSession = () => {
+  session.id = '';
+  session.customer = '';
+  session.table = '';
+  session.status = 'Ordering';
+  session.order = { items: [], price: 0, priceBeforeTax: 0 };
+  updateCloudSession();
+  updateOrder();
+};
+
 // Sync session with cloud
 watch(
   () => session,
@@ -844,9 +857,7 @@ const placeOrder = function () {
     new Date().getTime() + 7 * 60 * 60 * 1000
   )
     .toISOString()
-    .replace(/[TZ]/g, ' ')
-    .trim()
-    .split('.')[0];
+    .substring(11, 19);
   updateOrder();
   notifications.value.push(lang('orderPlaced'));
 };
