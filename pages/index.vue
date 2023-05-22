@@ -807,8 +807,7 @@ async function getOrderStatus() {
 
   const response = await fetch(apiUrl + '/get/' + lockerOrder);
   const order = await response.json();
-  console.log(order);
-  console.log();
+  if (development.value) console.log(order);
   if (order.status === 'processing' && session.status !== 'processing') {
     notifications.value.push(lang('orderProcessing'));
     session.status = 'processing';
@@ -820,12 +819,11 @@ async function getOrderStatus() {
   }
 }
 
-setInterval(async function () {
-  await getOrderStatus();
-  while (testVar < 10) {
-    await getOrderStatus();
+setInterval(function () {
+  if (testVar.value < 10) {
+    getOrderStatus();
     if (!development.value) {
-      testVar++;
+      testVar.value++;
     }
   }
 }, 2000);
@@ -841,6 +839,14 @@ function updateOrder() {
 const placeOrder = function () {
   if (session.order.items.length === 0) return;
   session.status = 'received';
+  // Add GMT+7 timestamp to order format yyyy-mm-dd hh:mm:ss
+  orderBackend.value.timeStamp = new Date(
+    new Date().getTime() + 7 * 60 * 60 * 1000
+  )
+    .toISOString()
+    .replace(/[TZ]/g, ' ')
+    .trim()
+    .split('.')[0];
   updateOrder();
   notifications.value.push(lang('orderPlaced'));
 };
