@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
 
 @font-face {
   font-family: 'Peachy Pure';
@@ -50,7 +50,7 @@ body {
   @apply border-2 border-gray-200 rounded m-2 p-2;
 }
 .item-details {
-  @apply border-yellow-300 rounded m-2 p-2;
+  @apply border-teal-200 rounded m-2 p-2;
   border-width: 10px;
 }
 
