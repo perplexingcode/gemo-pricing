@@ -260,7 +260,10 @@
                 </div>
               </div>
               <div class="add-item">
-                <button @click="addItem" :disabled="!optionsSelected">
+                <button
+                  @click="addItem"
+                  :disabled="!optionsSelected || session.status != 'Ordering'"
+                >
                   {{ lang('addItem').value }}
                 </button>
               </div>
@@ -487,19 +490,18 @@ const langCodeImg = computed(() => {
     EN: 'usa',
     VN: 'vietnam',
   };
-  return langCodeImgs[langCode.value];
+  return langCodeImgs[session.language];
 });
 const languages = ['EN', 'VN'];
-const langCode = ref(languages[0]);
 const toggleLanguage = () => {
-  langCode.value = languages[0];
+  session.language = languages[0];
   languages.shift();
-  languages.push(langCode.value);
-  langCode.value = languages[0];
+  languages.push(session.language);
+  session.language = languages[0];
 };
 const lang = function (key) {
   try {
-    return computed(() => dict[key][langCode.value]);
+    return computed(() => dict[key][session.language]);
   } catch (error) {
     return key;
   }
@@ -517,6 +519,7 @@ const session = reactive({
   customer: '',
   table: '',
   status: 'Ordering',
+  language: 'EN',
   order: { items: [], price: 0, priceBeforeTax: 0 },
 });
 
@@ -597,6 +600,7 @@ onMounted(async () => {
   session.table = cloudSession.table;
   session.status = cloudSession.status;
   session.order = cloudSession.order;
+  session.language = cloudSession.language;
 });
 //
 async function updateCloudSession() {
