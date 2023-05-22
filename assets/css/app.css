@@ -13,7 +13,7 @@
 
 body {
   /* font-family: 'Original Surfer', cursive; */
-  font-family: 'Comfortaa', cursive;
+  font-family: 'Comfortaa', sans-serif;
   background: url('~/assets/img/background.jpg');
   background-size: cover;
 }
