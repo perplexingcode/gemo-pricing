@@ -304,9 +304,10 @@
                   v-for="(item, index) in session.order.items"
                   :key="item.id"
                   class="flex"
+                  :data-tooltip="item.description"
                 >
                   <div class="invoice-item-name">
-                    <p :data-tooltip="item.description">{{ item.name }}</p>
+                    <p>{{ item.name }}</p>
                   </div>
                   <div class="invoice-dots"></div>
                   <p>${{ item.price }}</p>

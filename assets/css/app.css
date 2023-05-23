@@ -170,11 +170,11 @@ select {
 }
 
 .invoice-items > div:hover p:not(.delete-item) {
-  color: #ffff00;
+  color: #fff;
 }
 
 .invoice-items > div:hover > .invoice-dots {
-  border-color: #ffff00;
+  border-color: #fff;
 }
 
 /* Tooltip */
