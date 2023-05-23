@@ -530,6 +530,7 @@ const resetSession = () => {
   session.table = '';
   session.status = 'Ordering';
   session.order = { items: [], price: 0, priceBeforeTax: 0 };
+  session.language = 'EN';
   updateCloudSession();
   updateOrder();
 };
@@ -590,6 +591,7 @@ watch(
 //
 onMounted(async () => {
   const cloudSession = await getCloudSession();
+  console.log('?', cloudSession);
   if (!cloudSession.id) {
     session.id = v4();
     session.status = 'Ordering';
