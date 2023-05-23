@@ -593,6 +593,7 @@ onMounted(async () => {
   if (!cloudSession.id) {
     session.id = v4();
     session.status = 'Ordering';
+    session.language = 'EN';
     return;
   }
   session.id = cloudSession.id;
