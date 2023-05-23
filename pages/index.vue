@@ -306,7 +306,7 @@
                   class="flex"
                 >
                   <div class="invoice-item-name">
-                    <p>{{ item.name }}</p>
+                    <p :data-tooltip="item.description">{{ item.name }}</p>
                   </div>
                   <div class="invoice-dots"></div>
                   <p>${{ item.price }}</p>
@@ -318,7 +318,10 @@
                   </p>
                 </div>
               </div>
-              <hr />
+              <p v-if="session.order.items.length" class="text-xs text-center">
+                Hover to see item details
+              </p>
+              <hr class="mt-1 mb-1" />
               <div class="invoice-tax flex">
                 <div class="invoice-item-name">
                   <p>
@@ -750,14 +753,44 @@ watch(
 
 const addItem = () => {
   if (!optionsSelected.value) return;
-  const item = {
+  let description = '';
+  {
+    // Make description
+    const item = currentItem.value;
+    description += item.name + ' | ';
+    const options = [];
+    // Read options
+    for (const optionKey in item.options) {
+      const option = item.options[optionKey];
+      const selectedValues = option.values.filter((value) => value.selected);
+      if (selectedValues.length > 0) {
+        const optionKey = option.name;
+        let optionValue = '';
+        for (let i = 0; i < selectedValues.length; i++) {
+          const selectedValue = selectedValues[i];
+          optionValue = selectedValue.name;
+        }
+        options.push(optionKey + ': ' + optionValue);
+      }
+    }
+    // Read addons
+    for (const addonKey in item.addons) {
+      const addon = item.addons[addonKey];
+      if (addon.quantity > 0) {
+        options.push(addon.name + ' x' + addon.quantity);
+      }
+    }
+    description += options.join(', ');
+  }
+  const newItem = {
     id: v4(),
     name: currentItem.value.name,
     price: currentItem.value.price,
     options: currentItem.value.options,
     addons: currentItem.value.addons,
+    description: description,
   };
-  session.order.items.push(item);
+  session.order.items.push(newItem);
   // Reset currentItem
   currentItem.value = { type: '' };
   step.value = 1;
