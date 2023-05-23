@@ -312,7 +312,7 @@
                   <p>${{ item.price }}</p>
                   <p
                     @click="session.order.items.splice(index, 1)"
-                    class="pl-2 cursor-pointer"
+                    class="delete-item pl-2 cursor-pointer"
                   >
                     X
                   </p>
