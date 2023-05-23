@@ -876,7 +876,7 @@ async function getOrderStatus() {
 setInterval(function () {
   if (testVar.value < 10) {
     getOrderStatus();
-    if (!development.value) {
+    if (development.value) {
       testVar.value++;
     }
   }
