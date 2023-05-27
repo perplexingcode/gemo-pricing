@@ -470,583 +470,185 @@
   </ClientOnly>
 </template>
 <script setup>
-// << DEV
-import { JsonViewer } from 'vue3-json-viewer';
-import 'vue3-json-viewer/dist/index.css';
+    // << DEV
+    import { JsonViewer } from 'vue3-json-viewer';
+    import 'vue3-json-viewer/dist/index.css';
 
-import { v4 } from 'uuid';
-import dict from '~/static/dictionary.js';
-//<< DEV
-const log = ref('');
-const development = ref(false);
-const testVar = ref(0);
-// >>
+    import { v4 } from 'uuid';
+    import dict from '~/static/dictionary.js';
+    //<< DEV
+    const log = ref('');
+    const development = ref(false);
+    const testVar = ref(0);
+    // >>
 
-onMounted(() => {
-  if (window.location.search === '?dev') {
-    development.value = true;
-  }
-});
-
-// MULTI LANGUAGE
-const langCodeImg = computed(() => {
-  const langCodeImgs = {
-    EN: 'usa',
-    VN: 'vietnam',
-  };
-  return langCodeImgs[session.language];
-});
-const languages = ['EN', 'VN'];
-const toggleLanguage = () => {
-  session.language = languages[0];
-  languages.shift();
-  languages.push(session.language);
-  session.language = languages[0];
-};
-const lang = function (key) {
-  try {
-    return computed(() => dict[key][session.language]);
-  } catch (error) {
-    return key;
-  }
-};
-
-// API
-const lockerOrder = 'wunderbar_order';
-const lockerSession = 'wunderbar_session';
-const apiUrl =
-  'https://vq4h0iro9k.execute-api.ap-southeast-1.amazonaws.com/locker';
-
-// SESSION
-const session = reactive({
-  id: '',
-  customer: '',
-  table: '',
-  status: 'Ordering',
-  language: 'EN',
-  order: { items: [], price: 0, priceBeforeTax: 0 },
-});
-
-// DEV : Reset sesssion
-const resetSession = () => {
-  session.id = '';
-  session.customer = '';
-  session.table = '';
-  session.status = 'Ordering';
-  session.order = { items: [], price: 0, priceBeforeTax: 0 };
-  session.language = 'EN';
-  updateCloudSession();
-  updateOrder();
-};
-
-// Sync session with cloud
-watch(
-  () => session,
-  () => {
-    session.order.price =
-      Math.floor(
-        session.order.items.reduce((total, item) => total + item.price, 0) *
-          (1 + tax) *
-          100
-      ) / 100;
-    session.order.priceBeforeTax =
-      Math.floor(
-        session.order.items.reduce((total, item) => total + item.price, 0) * 100
-      ) / 100;
-
-    // Make description
-    let description = '';
-    for (let i = 0; i < session.order.items.length; i++) {
-      // Make description
-      const item = session.order.items[i];
-      description += '{ ' + (+i + 1) + ' | ' + item.name + ' | ';
-      const options = [];
-
-      // Read options
-      for (const optionKey in item.options) {
-        const option = item.options[optionKey];
-        const selectedValues = option.values.filter((value) => value.selected);
-        if (selectedValues.length > 0) {
-          const optionKey = option.name;
-          let optionValue = '';
-          for (let i = 0; i < selectedValues.length; i++) {
-            const selectedValue = selectedValues[i];
-            optionValue = '(' + selectedValue.name + ')';
-          }
-          options.push(optionKey + '=' + optionValue);
+    onMounted(() => {
+        if (window.location.search === '?dev') {
+            development.value = true;
         }
-      }
-      // Read addons
-      for (const addonKey in item.addons) {
-        const addon = item.addons[addonKey];
-        if (addon.quantity > 0) {
-          options.push('(' + addon.name + ')x' + addon.quantity);
+    });
+
+    // MULTI LANGUAGE
+    const langCodeImg = computed(() => {
+        const langCodeImgs = {
+            EN: 'usa',
+            VN: 'vietnam',
+        };
+        return langCodeImgs[session.language];
+    });
+    const languages = ['EN', 'VN'];
+    const toggleLanguage = () => {
+        session.language = languages[0];
+        languages.shift();
+        languages.push(session.language);
+        session.language = languages[0];
+    };
+    const lang = function (key) {
+        try {
+            return computed(() => dict[key][session.language]);
+        } catch (error) {
+            return key;
         }
-      }
-      description += options.join(' ');
-      description += ' } \n';
-    }
-    session.order.description = description;
-    //
-    updateCloudSession();
-  },
-  { deep: true }
-);
-//
-onMounted(async () => {
-  const cloudSession = await getCloudSession();
-  console.log('?', cloudSession);
-  if (!cloudSession.id) {
-    session.id = v4();
-    session.status = 'Ordering';
-    session.language = 'EN';
-    return;
-  }
-  session.id = cloudSession.id;
-  session.customer = cloudSession.customer;
-  session.table = cloudSession.table;
-  session.status = cloudSession.status;
-  session.order = cloudSession.order;
-  session.language = cloudSession.language;
-});
-//
-async function updateCloudSession() {
-  await fetch(apiUrl + '/upsert/' + lockerSession, {
-    method: 'POST',
-    headers: new Headers({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(session),
-  });
-}
-
-async function getCloudSession() {
-  const response = await fetch(apiUrl + '/get/' + lockerSession);
-  const _cloudSession = await response.json();
-
-  return _cloudSession;
-}
-// UI
-const notifications = ref([{ id: 'ok' }]);
-const UI = reactive({
-  cancelConfirm: false,
-  warnTooManyItems: false,
-});
-
-// :P
-watchEffect(() => {
-  if (session.order.items.length > 5 && !UI.warnTooManyItems) {
-    notifications.value.push(lang('tooManyItems'));
-  }
-});
-
-// CART (CURRENT ITEM. BUILDING ITEM, VALIDATION, ADD ITEM)
-const currentItem = ref({ type: '' });
-
-// Building item
-const step = ref(1);
-
-const nextStep = () => {
-  if (!currentItem.value.type) return;
-  if (step.value === 2) return;
-  step.value++;
-};
-const backStep = () => {
-  if (step.value === 1) return;
-  step.value--;
-};
-
-const resetOptions = () => {
-  const radios = document.querySelectorAll('input[type="radio"]');
-  radios.forEach((radio) => {
-    radio.checked = false;
-  });
-};
-
-// Step 1: Select item
-const selectItem = (item) => {
-  if (currentItem.value.key === item.key) {
-    step.value = 2;
-    return;
-  }
-  resetOptions();
-  currentItem.value = item;
-
-  // Default values
-  if (item.type === 'drink') {
-    currentItem.value.options = {
-      ...currentItem.value.options,
-      ...drinkOptions,
     };
-    currentItem.value.addons = {
-      ...currentItem.value.addons,
-      ...drinkAddons,
+
+    // API
+    const lockerOrder = 'wunderbar_order';
+    const lockerSession = 'wunderbar_session';
+    const apiUrl =
+        'https://vq4h0iro9k.execute-api.ap-southeast-1.amazonaws.com/locker';
+
+    // SESSION
+    const session = reactive({
+        id: '',
+        customer: '',
+        table: '',
+        status: 'Ordering',
+        language: 'EN',
+        order: { items: [], price: 0, priceBeforeTax: 0 },
+    });
+
+    // DEV : Reset sesssion
+    const resetSession = () => {
+        session.id = '';
+        session.customer = '';
+        session.table = '';
+        session.status = 'Ordering';
+        session.order = { items: [], price: 0, priceBeforeTax: 0 };
+        session.language = 'EN';
+        updateCloudSession();
+        updateOrder();
     };
-  }
-  if (item.type === 'food') {
-    currentItem.value.options = {
-      ...currentItem.value.options,
-      ...foodOptions,
-    };
-    currentItem.value.addons = {
-      ...currentItem.value.addons,
-      ...foodAddons,
-    };
-  }
 
-  // Inintialize states
-  for (const key in currentItem.value.options) {
-    for (const value of currentItem.value.options[key].values) {
-      value.selected = false;
-    }
-  }
-  currentItem.value.price = computed(() => {
-    function calculateMarkup(options, addons) {
-      let markup = 0;
+    // Sync session with cloud
+    watch(
+        () => session,
+        () => {
+            session.order.price =
+                Math.floor(
+                    session.order.items.reduce((total, item) => total + item.price, 0) *
+                    (1 + tax) *
+                    100
+                ) / 100;
+            session.order.priceBeforeTax =
+                Math.floor(
+                    session.order.items.reduce((total, item) => total + item.price, 0) * 100
+                ) / 100;
 
-      // Loop through each option
-      for (const option in options) {
-        // Loop through each value within option
-        for (const valueKey in options[option].values) {
-          const value = options[option].values[valueKey];
-          // Check if the value is selected
-          if (value.selected) {
-            markup += value.price;
-          }
-        }
-      }
+            // Make description
+            let description = '';
+            for (let i = 0; i < session.order.items.length; i++) {
+                // Make description
+                const item = session.order.items[i];
+                description += '{ ' + (+i + 1) + ' | ' + item.name + ' | ';
+                const options = [];
 
-      // Loop through each addon
-      for (const addon in addons) {
-        markup += currentItem.value.addons[addon].price;
-      }
-
-      return markup;
-    }
-    return (
-      currentItem.value.basePrice +
-      JSON.parse(
-        JSON.stringify(
-          calculateMarkup(currentItem.value.options, currentItem.value.addons)
-        )
-      )
+                // Read options
+                for (const optionKey in item.options) {
+                    const option = item.options[optionKey];
+                    const selectedValues = option.values.filter((value) => value.selected);
+                    if (selectedValues.length > 0) {
+                        const optionKey = option.name;
+                        let optionValue = '';
+                        for (let i = 0; i < selectedValues.length; i++) {
+                            const selectedValue = selectedValues[i];
+                            optionValue = '(' + selectedValue.name + ')';
+                        }
+                        options.push(optionKey + '=' + optionValue);
+                    }
+                }
+                // Read addons
+                for (const addonKey in item.addons) {
+                    const addon = item.addons[addonKey];
+                    if (addon.quantity > 0) {
+                        options.push('(' + addon.name + ')x' + addon.quantity);
+                    }
+                }
+                description += options.join(' ');
+                description += ' } \n';
+            }
+            session.order.description = description;
+            //
+            updateCloudSession();
+        },
+        { deep: true }
     );
-  });
-  step.value = 2;
-};
-
-const optionsSelected = ref(false); // Initialize with a default value
-watch(
-  () => {
-    const options = currentItem.value.options;
-    for (const optionKey in options) {
-      const option = options[optionKey];
-      const selectedValues = option.values.filter((value) => value.selected);
-
-      if (selectedValues.length === 0) {
-        optionsSelected.value = false; // At least one option does not have a selected value
-        return;
-      }
-    }
-
-    optionsSelected.value = true; // All options have at least one selected value
-  },
-  { immediate: true }
-);
-
-const addItem = () => {
-  if (!optionsSelected.value) return;
-  let description = '';
-  {
-    // Make description
-    const item = currentItem.value;
-    description += item.name + ' | ';
-    const options = [];
-    // Read options
-    for (const optionKey in item.options) {
-      const option = item.options[optionKey];
-      const selectedValues = option.values.filter((value) => value.selected);
-      if (selectedValues.length > 0) {
-        const optionKey = option.name;
-        let optionValue = '';
-        for (let i = 0; i < selectedValues.length; i++) {
-          const selectedValue = selectedValues[i];
-          optionValue = selectedValue.name;
-        }
-        options.push(optionKey + ': ' + optionValue);
-      }
-    }
-    // Read addons
-    for (const addonKey in item.addons) {
-      const addon = item.addons[addonKey];
-      if (addon.quantity > 0) {
-        options.push(addon.name + ' x' + addon.quantity);
-      }
-    }
-    description += options.join(', ');
-  }
-  const newItem = {
-    id: v4(),
-    name: currentItem.value.name,
-    price: currentItem.value.price,
-    options: currentItem.value.options,
-    addons: currentItem.value.addons,
-    description: description,
-  };
-  session.order.items.push(newItem);
-  // Reset currentItem
-  currentItem.value = { type: '' };
-  step.value = 1;
-};
-
-// Validation
-const computedCurrentItem = computed(() => {
-  return JSON.parse(JSON.stringify(currentItem.value));
-});
-watch(
-  computedCurrentItem,
-  (newValue, oldValue) => {
-    // L size is only available for cold and blended drinks
-    if (newValue?.type === 'drink') {
-      if (newValue.options.size.values[2].selected == true) {
-        currentItem.value.options.type.values[0].disabled = true;
-        currentItem.value.options.type.values[0].selected = false;
-        currentItem.value.options.type.values[0].tooltip =
-          'L size is only available for cold and blended drinks';
-      } else {
-        currentItem.value.options.type.values[0].disabled = false;
-      }
-    }
     //
-  },
-  {
-    deep: true,
-  }
-);
-
-// Step 2: Select options
-const selectOption = (option, value) => {
-  // Reset all values
-  option.values.forEach((value) => (value.selected = false));
-  const radios = document.querySelectorAll(
-    '.option-radios' + '.' + option.key + ' input'
-  );
-
-  radios.forEach((radio) => {
-    radio.checked = false;
-  });
-
-  // Select value
-  value.selected = true;
-  const radio = document.querySelector('.option' + '.' + value.key + ' input');
-  radio.checked = true;
-};
-
-// ORDER
-const tax = 0.0725;
-const orderBackend = computed(() => {
-  if (session.order.items.length === 0) {
-    return {};
-  }
-  return {
-    id: session.id,
-    description: session.order.description,
-    customer: session.customer,
-    table: session.table,
-    price: session.order.price,
-    status: session.status,
-  };
-});
-
-async function getOrderStatus() {
-  // Expect: orderId and status from cashier side
-
-  const response = await fetch(apiUrl + '/get/' + lockerOrder);
-  const order = await response.json();
-  if (development.value) console.log(order);
-  if (order.status === 'Processing' && session.status !== 'Processing') {
-    notifications.value.push(lang('orderProcessing'));
-    session.status = 'Processing';
-    console.log(session.status);
-  }
-  if (order.status === 'Done' && session.status !== 'Done') {
-    notifications.value.push(lang('orderCompleted'));
-    session.status = 'Done';
-  }
-}
-
-setInterval(function () {
-  if (testVar.value < 10) {
-    getOrderStatus();
-    if (development.value) {
-      testVar.value++;
+    onMounted(async () => {
+        const cloudSession = await getCloudSession();
+        console.log('?', cloudSession);
+        if (!cloudSession.id) {
+            session.id = v4();
+            session.status = 'Ordering';
+            session.language = 'EN';
+            return;
+        }
+        session.id = cloudSession.id;
+        session.customer = cloudSession.customer;
+        session.table = cloudSession.table;
+        session.status = cloudSession.status;
+        session.order = cloudSession.order;
+        session.language = cloudSession.language;
+    });
+    //
+    async function updateCloudSession() {
+        await fetch(apiUrl + '/upsert/' + lockerSession, {
+            method: 'POST',
+            headers: new Headers({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify(session),
+        });
     }
-  }
-}, 2000);
 
-function updateOrder() {
-  fetch(apiUrl + '/upsert/' + lockerOrder, {
-    method: 'POST',
-    headers: new Headers({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(orderBackend.value),
-  });
-}
+    async function getCloudSession() {
+        const response = await fetch(apiUrl + '/get/' + lockerSession);
+        const _cloudSession = await response.json();
 
-const placeOrder = function () {
-  if (session.order.items.length === 0) return;
-  session.status = 'Received';
-  // Add GMT+7 timestamp to order format yyyy-mm-dd hh:mm:ss
-  orderBackend.value.timeStamp = new Date(
-    new Date().getTime() + 7 * 60 * 60 * 1000
-  )
-    .toISOString()
-    .substring(11, 19);
-  updateOrder();
-  notifications.value.push(lang('orderPlaced'));
-};
+        return _cloudSession;
+    }
+    // UI
+    const notifications = ref([{ id: 'ok' }]);
+    const UI = reactive({
+        cancelConfirm: false,
+        warnTooManyItems: false,
+    });
 
-function cancelOrder() {
-  session.status = 'Cancelled';
-  updateOrder();
-  notifications.value.push(lang('orderCancelled'));
-}
+    // :P
+    watchEffect(() => {
+        if (session.order.items.length > 5 && !UI.warnTooManyItems) {
+            notifications.value.push(lang('tooManyItems'));
+        }
+    });
 
-const newOrder = function () {
-  session.id = v4();
-  console.log(session.status !== 'Cancelled');
-  if (session.status !== 'Cancelled') {
-    session.order.items = [];
-  }
-  session.status = 'Ordering';
-  updateOrder();
-};
+    import { ref, onMounted, watch, reactive, computed } from 'vue';
+    import order from './order.vue';
+    import cart from './cart.vue';
+    import menuitems from './menuitems.vue';
 
-// MODULE: DATA
-const drinks = computed(() => {
-  return Object.values(items).filter((item) => item.type === 'drink');
-});
+    export default {
+        components: {
+            order,
+            cart: cart,
+            menuitems: menuitems
+        }
+    };
 
-const foods = computed(() => {
-  return Object.values(items).filter((item) => item.type === 'food');
-});
-const items = {
-  // Drinks
-  coffee: {
-    name: lang('coffee'),
-    key: 'coffee',
-    img: 'https://img.icons8.com/fluency/48/vietnamese-coffee.png',
-    type: 'drink',
-    basePrice: 2,
-    options: {},
-    addons: {},
-  },
-  milkTea: {
-    name: lang('milkTea'),
-    key: 'milkTea',
-    img: 'https://img.icons8.com/fluency/48/milkshake.png',
-    type: 'drink',
-    basePrice: 2.25,
-    options: {
-      milk: {
-        name: lang('milk'),
-        key: 'milk',
-        values: [
-          { name: lang('wholeMilk'), key: 'whole', price: 0 },
-          { name: lang('almondMilk'), key: 'almond', price: 0.5 },
-        ],
-      },
-    },
-    addons: {},
-  },
-  // Foods
-  sandwich: {
-    name: lang('sandwich'),
-    key: 'sandwich',
-    img: 'https://img.icons8.com/fluency/48/sandwich.png',
-    type: 'food',
-    basePrice: 3,
-    options: {
-      filling: {
-        name: lang('filling'),
-        values: [
-          { name: lang('egg'), key: 'egg', price: 1 },
-          {
-            name: lang('turkey'),
-            key: 'turkey',
-            price: 1,
-          },
-        ],
-      },
-    },
-  },
-  bagel: {
-    name: lang('bagel'),
-    key: 'bagel',
-    img: 'https://img.icons8.com/fluency/48/bagel.png',
-    type: 'food',
-    basePrice: 3,
-    options: {
-      spread: {
-        name: lang('spread'),
-        values: [
-          { name: lang('butter'), key: 'butter', price: 0.5 },
-          {
-            name: lang('creamCheese'),
-            key: 'creamCheese',
-            price: 0.5,
-          },
-        ],
-      },
-    },
-  },
-};
-
-const drinkOptions = {
-  type: {
-    name: lang('type'),
-    key: 'type',
-    values: [
-      { name: lang('hot'), key: 'hot', price: 0 },
-      { name: lang('cold'), key: 'cold', price: 0 },
-      { name: lang('blended'), key: 'blended', price: 1 },
-    ],
-  },
-  size: {
-    name: lang('size'),
-    key: 'size',
-    values: [
-      { name: 'S', key: 's', price: 0 },
-      { name: 'M', key: 'm', price: 0.5 },
-      { name: 'L', key: 'l', price: 1 },
-      { name: 'XL', key: 'xl', price: 1.5 },
-    ],
-  },
-};
-
-const foodOptions = {};
-const foodAddons = {};
-
-const drinkAddons = {
-  chocolate: {
-    name: lang('chocolateSauce'),
-    key: 'chocolate',
-    quantity: 0,
-    basePrice: 0.5,
-    showBasePrice: false,
-    price: 0.5,
-    description: lang('chocolateSauceDes'),
-    logic() {
-      if (this.quantity < 0) {
-        this.quantity = 0;
-      }
-      if (this.quantity > 6) {
-        this.quantity = 6;
-      }
-      if (this.quantity <= 2) {
-        this.price = 0;
-      } else {
-        this.price = 0.5 + (this.quantity - 2) * 0.5;
-      }
-    },
-  },
-};
 </script>
-<style></style>
