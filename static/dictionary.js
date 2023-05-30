@@ -79,6 +79,14 @@ export default {
     EN: 'Hot',
     VN: 'Nóng',
   },
+  hoverItem: {
+    EN: 'Hover to see item details',
+    VN: 'Di chuột để xem chi tiết món',
+  },
+  login: {
+    EN: 'Login',
+    VN: 'Đăng nhập',
+  },
   milk: {
     EN: 'Milk',
     VN: 'Sữa',
@@ -135,6 +143,14 @@ export default {
     EN: 'Processing order...',
     VN: 'Đang chế biến...',
   },
+  password: {
+    EN: 'Password',
+    VN: 'Mật khẩu',
+  },
+  passwordConfirm: {
+    EN: 'Confirm password',
+    VN: 'Xác nhận mật khẩu',
+  },
   sandwich: {
     EN: 'Sandwich',
     VN: 'Bánh mì kẹp',
@@ -146,6 +162,10 @@ export default {
   selectOptions: {
     EN: 'Select option',
     VN: 'Tùy chọn',
+  },
+  signup: {
+    EN: 'Sign up',
+    VN: 'Đăng ký',
   },
   size: {
     EN: 'Size',
@@ -178,6 +198,10 @@ export default {
   tooManyItems: {
     EN: 'You have ordered too many items. Please be aware of possible bankruptcy.',
     VN: 'Bạn đã đặt quá nhiều món, bạn có chắc anh ấy sẽ trả tiền chứ?',
+  },
+  username: {
+    EN: 'Username',
+    VN: 'Tên đăng nhập',
   },
   wholeMilk: {
     EN: 'Whole Milk',

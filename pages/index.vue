@@ -1,6 +1,7 @@
 <template>
   <ClientOnly>
     <div id="main-wrap" class="">
+      <User />
       <div
         class="language p-3 cursor-pointer w-fit fixed sm:z-20"
         @click="toggleLanguage"
@@ -320,7 +321,7 @@
                 </div>
               </div>
               <p v-if="session.order.items.length" class="text-xs text-center">
-                Hover to see item details
+                {{ lang('hoverItem').value }}
               </p>
               <hr class="mt-1 mb-1" />
               <div class="invoice-tax flex">
@@ -436,14 +437,6 @@
         <div class="flex">
           <h3>session</h3>
           <JsonViewer :value="session" :expandDepth="10" copyable boxed sort />
-          <h3>order backend</h3>
-          <JsonViewer
-            :value="orderBackend"
-            :expandDepth="10"
-            copyable
-            boxed
-            sort
-          />
           <h3>log</h3>
           <JsonViewer :value="log" :expandDepth="10" copyable boxed sort />
           <h3>current-item</h3>
@@ -462,6 +455,8 @@
             boxed
             sort
           />
+          <h3>orders</h3>
+          <JsonViewer :value="orders" copyable boxed />
         </div>
         <input v-model="testVar" />
         <!-- expanded -->
@@ -476,6 +471,9 @@ import 'vue3-json-viewer/dist/index.css';
 
 import { v4 } from 'uuid';
 import dict from '~/static/dictionary.js';
+
+const sessionToken = inject('sessionToken');
+
 //<< DEV
 const log = ref('');
 const development = ref(false);
@@ -511,8 +509,11 @@ const lang = function (key) {
   }
 };
 
+provide('lang', lang);
+
 // API
 const lockerOrder = 'wunderbar_order';
+const lockerOrders = 'wunderbar_orders';
 const lockerSession = 'wunderbar_session';
 const apiUrl =
   'https://vq4h0iro9k.execute-api.ap-southeast-1.amazonaws.com/locker';
@@ -535,6 +536,9 @@ const resetSession = () => {
   session.status = 'Ordering';
   session.order = { items: [], price: 0, priceBeforeTax: 0 };
   session.language = 'EN';
+  orders = reactive({});
+
+  updateOrderHistory();
   updateCloudSession();
   updateOrder();
 };
@@ -595,7 +599,6 @@ watch(
 //
 onMounted(async () => {
   const cloudSession = await getCloudSession();
-  console.log('?', cloudSession);
   if (!cloudSession.id) {
     session.id = v4();
     session.status = 'Ordering';
@@ -608,22 +611,55 @@ onMounted(async () => {
   session.status = cloudSession.status;
   session.order = cloudSession.order;
   session.language = cloudSession.language;
+
+  // Order history
+  const cloudOrderHistory = await getOrderHistory();
 });
 //
 async function updateCloudSession() {
   await fetch(apiUrl + '/upsert/' + lockerSession, {
     method: 'POST',
-    headers: new Headers({ 'Content-Type': 'application/json' }),
+    headers: new Headers({
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + sessionToken.value,
+    }),
     body: JSON.stringify(session),
   });
 }
 
 async function getCloudSession() {
-  const response = await fetch(apiUrl + '/get/' + lockerSession);
+  const response = await fetch(apiUrl + '/get/' + lockerSession, {
+    headers: new Headers({ Authorization: 'Bearer ' + sessionToken.value }),
+  });
   const _cloudSession = await response.json();
 
   return _cloudSession;
 }
+
+async function updateOrderHistory() {
+  const _session = JSON.parse(JSON.stringify(session));
+  orders[_session.id] = _session;
+  orders[_session.id].status = _session.status;
+
+  orders[_session.id].timestamp = getTimestamp();
+  fetch(apiUrl + '/upsert/' + lockerOrders, {
+    method: 'POST',
+    headers: new Headers({
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + sessionToken.value,
+    }),
+    body: JSON.stringify(orders),
+  });
+}
+
+async function getOrderHistory() {
+  const response = await fetch(apiUrl + '/get/' + lockerOrders, {
+    headers: new Headers({ Authorization: 'Bearer ' + sessionToken.value }),
+  });
+  const _cloudOrders = await response.json();
+  return _cloudOrders;
+}
+
 // UI
 const notifications = ref([{ id: 'ok' }]);
 const UI = reactive({
@@ -637,6 +673,10 @@ watchEffect(() => {
     notifications.value.push(lang('tooManyItems'));
   }
 });
+
+// ORDERS
+let orders = reactive({});
+provide('orders', orders);
 
 // CART (CURRENT ITEM. BUILDING ITEM, VALIDATION, ADD ITEM)
 const currentItem = ref({ type: '' });
@@ -859,13 +899,16 @@ const orderBackend = computed(() => {
 async function getOrderStatus() {
   // Expect: orderId and status from cashier side
 
-  const response = await fetch(apiUrl + '/get/' + lockerOrder);
+  const response = await fetch(apiUrl + '/get/' + lockerOrder, {
+    headers: {
+      Authorization: 'Bearer ' + sessionToken.value,
+    },
+  });
   const order = await response.json();
-  if (development.value) console.log(order);
+
   if (order.status === 'Processing' && session.status !== 'Processing') {
     notifications.value.push(lang('orderProcessing'));
     session.status = 'Processing';
-    console.log(session.status);
   }
   if (order.status === 'Done' && session.status !== 'Done') {
     notifications.value.push(lang('orderCompleted'));
@@ -874,8 +917,12 @@ async function getOrderStatus() {
 }
 
 setInterval(function () {
+  if (!sessionToken.value) {
+    return;
+  }
   if (testVar.value < 10) {
     getOrderStatus();
+    getOrderHistory();
     if (development.value) {
       testVar.value++;
     }
@@ -885,33 +932,40 @@ setInterval(function () {
 function updateOrder() {
   fetch(apiUrl + '/upsert/' + lockerOrder, {
     method: 'POST',
-    headers: new Headers({ 'Content-Type': 'application/json' }),
+    headers: new Headers({
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + sessionToken.value,
+    }),
     body: JSON.stringify(orderBackend.value),
   });
 }
+
+const getTimestamp = function () {
+  return new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
+    .toISOString()
+    .substring(11, 19);
+};
 
 const placeOrder = function () {
   if (session.order.items.length === 0) return;
   session.status = 'Received';
   // Add GMT+7 timestamp to order format yyyy-mm-dd hh:mm:ss
-  orderBackend.value.timeStamp = new Date(
-    new Date().getTime() + 7 * 60 * 60 * 1000
-  )
-    .toISOString()
-    .substring(11, 19);
+  orderBackend.value.timeStamp = getTimestamp();
   updateOrder();
   notifications.value.push(lang('orderPlaced'));
+  updateOrderHistory();
 };
 
 function cancelOrder() {
   session.status = 'Cancelled';
   updateOrder();
   notifications.value.push(lang('orderCancelled'));
+  updateOrderHistory();
 }
 
 const newOrder = function () {
   session.id = v4();
-  console.log(session.status !== 'Cancelled');
+
   if (session.status !== 'Cancelled') {
     session.order.items = [];
   }

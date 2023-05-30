@@ -1,0 +1,2 @@
+- smooth placeholder to label
+- smooth transition

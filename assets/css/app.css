@@ -18,6 +18,10 @@ body {
   background-size: cover;
 }
 
+*:is(h1, h2, h3, h4, h5, h6) {
+  text-align: center;
+}
+
 .app-title {
   font-family: 'Peachy Pure', cursive;
   font-size: 8rem;
@@ -85,6 +89,18 @@ button:disabled {
   margin-left: 1rem;
   margin-right: 1rem;
   margin-bottom: 0.5rem;
+}
+
+.input-group {
+  @apply flex flex-col;
+}
+
+.input-group:not(:last-child) {
+  @apply mb-2;
+}
+
+.input-group label {
+  margin-bottom: 0.1rem;
 }
 
 input,
