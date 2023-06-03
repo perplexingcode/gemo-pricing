@@ -63,7 +63,7 @@
               </div>
               <div class="btn-wrapper plus-minus">
                 <img
-                  v-if="step === 1 && currentItem.type"
+                  v-if="step === 1 && session.item.type"
                   @click="nextStep"
                   width="32"
                   class="go-next cursor-pointer"
@@ -80,18 +80,18 @@
             </div>
             <div
               class="current-item-mobile text-center sm:hidden block"
-              v-if="currentItem.type && step == 2"
+              v-if="session.item.type && step == 2"
             >
-              <p>{{ currentItem.name }}</p>
-              <span class="price"> ${{ currentItem.price }} </span>
+              <p>{{ session.item.name }}</p>
+              <span class="price"> ${{ session.item.price }} </span>
               <span
                 class="text-xs price"
-                v-if="currentItem.price != currentItem.basePrice"
-                >{{ '  ($' + currentItem.basePrice + ')' }}</span
+                v-if="session.item.price != session.item.basePrice"
+                >{{ '  ($' + session.item.basePrice + ')' }}</span
               >
             </div>
             <div
-              v-if="currentItem.type"
+              v-if="session.item.type"
               class="current-item card m-auto outline-3 outline-teal-300 outline sm:block hidden"
               @dblclick="addItem"
             >
@@ -100,16 +100,16 @@
                 <img
                   width="48"
                   height="48"
-                  :src="currentItem.img"
-                  :alt="currentItem.name"
+                  :src="session.item.img"
+                  :alt="session.item.name"
                   class="m-auto"
                 />
                 <div class="flex flex-col">
-                  <h3>{{ currentItem.name }}</h3>
+                  <h3>{{ session.item.name }}</h3>
                   <div class="flex flex-col">
-                    <span class="price"> ${{ currentItem.price }} </span>
+                    <span class="price"> ${{ session.item.price }} </span>
                     <!-- <span class="text-xs price">{{
-                      '  ($' + currentItem.basePrice + ')'
+                      '  ($' + session.item.basePrice + ')'
                     }}</span> -->
                   </div>
                 </div>
@@ -124,10 +124,10 @@
                     <div
                       v-for="item in drinks"
                       class="item text-center"
-                      :class="{ active: currentItem.key === item.key }"
+                      :class="{ active: session.item.key === item.key }"
                       @click="
                         selectItem(item);
-                        currentItem.key !== item.key ? resetOptions() : null;
+                        session.item.key !== item.key ? resetOptions() : null;
                       "
                       :key="item.name"
                     >
@@ -151,7 +151,7 @@
                     <div
                       v-for="item in foods"
                       class="item text-center"
-                      :class="{ active: currentItem.key === item.key }"
+                      :class="{ active: session.item.key === item.key }"
                       @click="selectItem(item)"
                       :key="item.name"
                     >
@@ -174,7 +174,7 @@
             <div class="step-2" v-show="step === 2">
               <div class="options flex flex-col">
                 <div
-                  v-for="option in currentItem.options"
+                  v-for="option in session.item.options"
                   :key="option.name"
                   :class="option.key"
                 >
@@ -213,7 +213,7 @@
               </div>
               <div class="addons flex flex-col">
                 <div
-                  v-for="addon in currentItem.addons"
+                  v-for="addon in session.item.addons"
                   :key="addon.name"
                   :class="addon.key"
                 >
@@ -254,7 +254,7 @@
               <div class="add-item">
                 <button
                   @click="addItem"
-                  :disabled="!optionsSelected || session.status != 'Ordering'"
+                  :disabled="!optionsSelected || order.status != 'Ordering'"
                 >
                   {{ lang('addItem').value }}
                 </button>
@@ -262,32 +262,28 @@
             </div>
           </div>
         </transition>
-        <div class="order-details">
+        <div mclass="order-details">
           <div class="invoice">
             <div class="border h-fit">
               <div class="text-center">
-                <h1
-                  v-if="session.status == 'Ordering'"
-                  class="text-xl font-bold"
-                >
+                <h1 v-if="order.status == 'Ordering'" class="text-xl font-bold">
                   {{ lang('checkout').value }}
                 </h1>
                 <h1
                   v-if="
-                    session.status == 'Processing' ||
-                    session.status == 'Received'
+                    order.status == 'Processing' || order.status == 'Received'
                   "
                   class="text-xl font-bold"
                 >
                   {{ lang('orderPlaced').value }}
                 </h1>
                 <h1
-                  v-if="session.status == 'Cancelled'"
+                  v-if="order.status == 'Cancelled'"
                   class="text-xl font-bold"
                 >
                   {{ lang('orderCancelled').value }}
                 </h1>
-                <h1 v-if="session.status == 'Done'" class="text-xl font-bold">
+                <h1 v-if="order.status == 'Done'" class="text-xl font-bold">
                   {{ lang('orderDoneTitle').value }}
                 </h1>
               </div>
@@ -333,10 +329,7 @@
               </div>
             </div>
           </div>
-          <div
-            v-if="session.status == 'Ordering'"
-            class="flex flex-col customer"
-          >
+          <div v-if="order.status == 'Ordering'" class="flex flex-col customer">
             <label class="pl-4 pt-1">{{ lang('name').value }}</label>
             <input
               class="customer-name"
@@ -345,7 +338,9 @@
             />
             <label class="pl-4 pt-1">{{ lang('table').value }}</label>
             <select v-model="session.table">
-              <option disabled value="">{{ lang('yourTable').value }}</option>
+              <option disabled selected value="">
+                {{ lang('yourTable').value }}
+              </option>
               <option value="1">1</option>
               <option value="2">2</option>
               <option value="3">3</option>
@@ -360,10 +355,10 @@
           </div>
           <div
             v-if="
-              session.status == 'Processing' ||
-              session.status == 'Received' ||
-              session.status == 'Done' ||
-              session.status == 'Cancelled'
+              order.status == 'Processing' ||
+              order.status == 'Received' ||
+              order.status == 'Done' ||
+              order.status == 'Cancelled'
             "
             class="pl-3"
           >
@@ -372,28 +367,28 @@
           </div>
           <div class="text-center">
             <button
-              v-if="session.status == 'Ordering'"
+              v-if="order.status == 'Ordering'"
               @click="placeOrder"
               :disabled="session.table === '' || order.items.length === 0"
             >
               {{ lang('order').value }}
             </button>
             <button
-              v-if="session.status == 'Received'"
+              v-if="order.status == 'Received'"
               @click="UI.cancelConfirm = true"
               class="btn-cancel"
             >
               {{ lang('orderCancel').value }}
             </button>
             <button
-              v-if="session.status == 'Processing'"
+              v-if="order.status == 'Processing'"
               disabled
               class="btn-processing"
             >
               {{ lang('orderProcessingButton').value }}
             </button>
             <button
-              v-if="session.status == 'Cancelled' || session.status == 'Done'"
+              v-if="order.status == 'Cancelled' || order.status == 'Done'"
               @click="newOrder"
               class="btn-new-order"
             >
@@ -426,22 +421,24 @@ import 'vue3-json-viewer/dist/index.css';
 
 import { v4 } from 'uuid';
 
-// CONST
+// INJECTS
 const development = inject('development');
 const sessionToken = inject('sessionToken');
 const lang = inject('lang');
-
-// INJECTS
 const session = inject('session');
-const orders = inject('orders');
 const user = inject('user');
 const db = inject('db');
+const notifications = inject('notifications');
 
-//<< DEV
-const log = ref('');
-const testVar = ref(0);
-// >>
-const order = reactive({});
+// ORDER
+const order = reactive({
+  id: v4(),
+  status: 'Ordering',
+  items: [],
+  price: 0,
+  priceBeforeTax: 0,
+});
+
 // Sync session with cloud
 watch(
   order,
@@ -511,13 +508,13 @@ watchEffect(() => {
 });
 
 // CART (CURRENT ITEM. BUILDING ITEM, VALIDATION, ADD ITEM)
-const currentItem = ref({ type: '' });
+session.item = ref({ type: '' });
 
 // Building item
 const step = ref(1);
 
 const nextStep = () => {
-  if (!currentItem.value.type) return;
+  if (!session.item.type) return;
   if (step.value === 2) return;
   step.value++;
 };
@@ -535,42 +532,42 @@ const resetOptions = () => {
 
 // Step 1: Select item
 const selectItem = (item) => {
-  if (currentItem.value.key === item.key) {
+  if (session.item.key === item.key) {
     step.value = 2;
     return;
   }
   resetOptions();
-  currentItem.value = item;
+  session.item = item;
 
   // Default values
   if (item.type === 'drink') {
-    currentItem.value.options = {
-      ...currentItem.value.options,
+    session.item.options = {
+      ...session.item.options,
       ...drinkOptions,
     };
-    currentItem.value.addons = {
-      ...currentItem.value.addons,
+    session.item.addons = {
+      ...session.item.addons,
       ...drinkAddons,
     };
   }
   if (item.type === 'food') {
-    currentItem.value.options = {
-      ...currentItem.value.options,
+    session.item.options = {
+      ...session.item.options,
       ...foodOptions,
     };
-    currentItem.value.addons = {
-      ...currentItem.value.addons,
+    session.item.addons = {
+      ...session.item.addons,
       ...foodAddons,
     };
   }
 
   // Inintialize states
-  for (const key in currentItem.value.options) {
-    for (const value of currentItem.value.options[key].values) {
+  for (const key in session.item.options) {
+    for (const value of session.item.options[key].values) {
       value.selected = false;
     }
   }
-  currentItem.value.price = computed(() => {
+  session.item.price = computed(() => {
     function calculateMarkup(options, addons) {
       let markup = 0;
 
@@ -588,16 +585,16 @@ const selectItem = (item) => {
 
       // Loop through each addon
       for (const addon in addons) {
-        markup += currentItem.value.addons[addon].price;
+        markup += session.item.addons[addon].price;
       }
 
       return markup;
     }
     return (
-      currentItem.value.basePrice +
+      session.item.basePrice +
       JSON.parse(
         JSON.stringify(
-          calculateMarkup(currentItem.value.options, currentItem.value.addons)
+          calculateMarkup(session.item.options, session.item.addons)
         )
       )
     );
@@ -607,8 +604,9 @@ const selectItem = (item) => {
 
 const optionsSelected = ref(false); // Initialize with a default value
 watch(
+  session,
   () => {
-    const options = currentItem.value.options;
+    const options = session.item.options;
     for (const optionKey in options) {
       const option = options[optionKey];
       const selectedValues = option.values.filter((value) => value.selected);
@@ -629,7 +627,7 @@ const addItem = () => {
   let description = '';
   {
     // Make description
-    const item = currentItem.value;
+    const item = session.item;
     description += item.name + ' | ';
     const options = [];
     // Read options
@@ -657,34 +655,34 @@ const addItem = () => {
   }
   const newItem = {
     id: v4(),
-    name: currentItem.value.name,
-    price: currentItem.value.price,
-    options: currentItem.value.options,
-    addons: currentItem.value.addons,
+    name: session.item.name,
+    price: session.item.price,
+    options: session.item.options,
+    addons: session.item.addons,
     description: description,
   };
   order.items.push(newItem);
-  // Reset currentItem
-  currentItem.value = { type: '' };
+  // Reset session.item
+  session.item = { type: '' };
   step.value = 1;
 };
 
 // Validation
-const computedCurrentItem = computed(() => {
-  return JSON.parse(JSON.stringify(currentItem.value));
+const computedItem = computed(() => {
+  return JSON.parse(JSON.stringify(session.item));
 });
 watch(
-  computedCurrentItem,
+  computedItem,
   (newValue, oldValue) => {
     // L size is only available for cold and blended drinks
     if (newValue?.type === 'drink') {
       if (newValue.options.size.values[2].selected == true) {
-        currentItem.value.options.type.values[0].disabled = true;
-        currentItem.value.options.type.values[0].selected = false;
-        currentItem.value.options.type.values[0].tooltip =
+        session.item.options.type.values[0].disabled = true;
+        session.item.options.type.values[0].selected = false;
+        session.item.options.type.values[0].tooltip =
           'L size is only available for cold and blended drinks';
       } else {
-        currentItem.value.options.type.values[0].disabled = false;
+        session.item.options.type.values[0].disabled = false;
       }
     }
     //
@@ -724,7 +722,7 @@ const orderBackend = computed(() => {
     customer: session.customer,
     table: session.table,
     price: order.price,
-    status: session.status,
+    status: order.status,
   };
 });
 
@@ -736,7 +734,7 @@ const getTimestamp = function () {
 
 const placeOrder = function () {
   if (order.items.length === 0) return;
-  session.status = 'Received';
+  order.status = 'Received';
   // Add GMT+7 timestamp to order format yyyy-mm-dd hh:mm:ss
   orderBackend.value.timeStamp = getTimestamp();
   updateOrder();
@@ -745,7 +743,7 @@ const placeOrder = function () {
 };
 
 function cancelOrder() {
-  session.status = 'Cancelled';
+  order.status = 'Cancelled';
   updateOrder();
   notifications.value.push(lang('orderCancelled'));
   updateOrderHistory();
@@ -754,10 +752,10 @@ function cancelOrder() {
 const newOrder = function () {
   session.id = v4();
 
-  if (session.status !== 'Cancelled') {
+  if (order.status !== 'Cancelled') {
     order.items = [];
   }
-  session.status = 'Ordering';
+  order.status = 'Ordering';
   updateOrder();
 };
 

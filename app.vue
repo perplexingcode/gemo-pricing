@@ -14,28 +14,10 @@
       <button @click="resetSession">Reset session</button>
       <p class="py-1">{{ session.status }}</p>
       <div class="flex">
-        <h3>session</h3>
-        <JsonViewer :value="session" :expandDepth="10" copyable boxed sort />
-        <h3>log</h3>
-        <JsonViewer :value="log" :expandDepth="10" copyable boxed sort />
-        <h3>current-item</h3>
-        <JsonViewer
-          :value="currentItem"
-          :expandDepth="10"
-          copyable
-          boxed
-          sort
-        />
-        <h3>session.order</h3>
-        <JsonViewer
-          :value="session.order"
-          :expandDepth="10"
-          copyable
-          boxed
-          sort
-        />
-        <h3>orders</h3>
-        <JsonViewer :value="orders" copyable boxed />
+        <Json name="Session" :value="session" />
+        <Json name="Log" :value="log" />
+        <Json name="User" :value="user" />
+        <Json name="Orders" :value="orders" />
       </div>
       <input v-model="testVar" />
       <!-- expanded -->
@@ -43,16 +25,18 @@
   </div>
 </template>
 <script setup>
-// << DEV
-import { JsonViewer } from 'vue3-json-viewer';
-import 'vue3-json-viewer/dist/index.css';
+import { v4 } from 'uuid';
 
 import Cookies from 'js-cookie';
 import dict from '~/static/dictionary.js';
 
 import { upsert, getById, getAll } from '~/static/db.js';
 
+//<< DEV
 const development = ref(false);
+const log = ref('');
+const testVar = ref(0);
+// >>
 
 const sessionToken = ref(null);
 
@@ -85,18 +69,12 @@ const notifications = ref([{ id: 'ok' }]);
 // SESSION, USER, ORDERS
 const session = reactive({
   id: null,
-  currentItem: null,
-  currentOrder: null,
+  language: 'EN',
+  customer: null,
+  table: null,
+  item: { type: '' },
+  orderId: null,
 });
-
-// reactive({
-//   id: '',
-//   customer: '',
-//   table: '',
-//   status: 'Ordering',
-//   language: 'EN',
-//   order: { items: [], price: 0, priceBeforeTax: 0 },
-// });
 
 const user = reactive({
   id: null,
@@ -135,7 +113,7 @@ onMounted(async () => {
   if (!sessionToken.value) return;
 
   const cloudSession = await getCloudSession();
-  if (!cloudSession.id) {
+  if (!cloudSession.id) {dt8y1wjnhnhi
     session.id = v4();
     session.status = 'Ordering';
     session.language = 'EN';
@@ -144,8 +122,6 @@ onMounted(async () => {
   session.id = cloudSession.id;
   session.customer = cloudSession.customer;
   session.table = cloudSession.table;
-  session.status = cloudSession.status;
-  session.order = cloudSession.order;
   session.language = cloudSession.language;
 
   // Order history
@@ -157,8 +133,8 @@ setInterval(function () {
     return;
   }
   if (testVar.value < 10) {
-    getOrderStatus();
-    getOrderHistory();
+    db.get.orderStatus();
+    db.get.orders();
     if (development.value) {
       testVar.value++;
     }
@@ -230,7 +206,7 @@ const resetSession = () => {
   session.customer = '';
   session.table = '';
   session.status = 'Ordering';
-  session.order = { items: [], price: 0, priceBeforeTax: 0 };
+  session.order = { id: v4(), items: [], price: 0, priceBeforeTax: 0 };
   session.language = 'EN';
   orders = reactive({});
 
