@@ -2,15 +2,6 @@
   <ClientOnly>
     <div id="main-wrap" class="">
       <User />
-      <div
-        class="language p-3 cursor-pointer w-fit fixed sm:z-20"
-        @click="toggleLanguage"
-      >
-        <img
-          width="32"
-          :src="'https://img.icons8.com/color/48/' + langCodeImg + '.png'"
-        />
-      </div>
       <div class="header text-center p-3">
         <div
           v-if="notifications.length > 0"
@@ -302,7 +293,7 @@
               </div>
               <div class="invoice-items">
                 <div
-                  v-for="(item, index) in session.order.items"
+                  v-for="(item, index) in order.items"
                   :key="item.id"
                   class="flex"
                   :data-tooltip="item.description"
@@ -313,14 +304,14 @@
                   <div class="invoice-dots"></div>
                   <p>${{ item.price }}</p>
                   <p
-                    @click="session.order.items.splice(index, 1)"
+                    @click="order.items.splice(index, 1)"
                     class="delete-item pl-2 cursor-pointer"
                   >
                     X
                   </p>
                 </div>
               </div>
-              <p v-if="session.order.items.length" class="text-xs text-center">
+              <p v-if="order.items.length" class="text-xs text-center">
                 {{ lang('hoverItem').value }}
               </p>
               <hr class="mt-1 mb-1" />
@@ -333,16 +324,12 @@
                   </p>
                 </div>
                 <div class="invoice-dots"></div>
-                <p>
-                  ${{
-                    Math.floor(session.order.priceBeforeTax * tax * 100) / 100
-                  }}
-                </p>
+                <p>${{ Math.floor(order.priceBeforeTax * tax * 100) / 100 }}</p>
               </div>
               <div class="invoice-total flex">
                 <p>{{ lang('total').value }}</p>
                 <div class="invoice-dots"></div>
-                <p>${{ session.order.price }}</p>
+                <p>${{ order.price }}</p>
               </div>
             </div>
           </div>
@@ -387,9 +374,7 @@
             <button
               v-if="session.status == 'Ordering'"
               @click="placeOrder"
-              :disabled="
-                session.table === '' || session.order.items.length === 0
-              "
+              :disabled="session.table === '' || order.items.length === 0"
             >
               {{ lang('order').value }}
             </button>
@@ -431,36 +416,6 @@
           </div>
         </div>
       </div>
-      <div v-if="development" class="development py-5 card">
-        <button @click="resetSession">Reset session</button>
-        <p class="py-1">{{ session.status }}</p>
-        <div class="flex">
-          <h3>session</h3>
-          <JsonViewer :value="session" :expandDepth="10" copyable boxed sort />
-          <h3>log</h3>
-          <JsonViewer :value="log" :expandDepth="10" copyable boxed sort />
-          <h3>current-item</h3>
-          <JsonViewer
-            :value="currentItem"
-            :expandDepth="10"
-            copyable
-            boxed
-            sort
-          />
-          <h3>session.order</h3>
-          <JsonViewer
-            :value="session.order"
-            :expandDepth="10"
-            copyable
-            boxed
-            sort
-          />
-          <h3>orders</h3>
-          <JsonViewer :value="orders" copyable boxed />
-        </div>
-        <input v-model="testVar" />
-        <!-- expanded -->
-      </div>
     </div>
   </ClientOnly>
 </template>
@@ -470,99 +425,43 @@ import { JsonViewer } from 'vue3-json-viewer';
 import 'vue3-json-viewer/dist/index.css';
 
 import { v4 } from 'uuid';
-import dict from '~/static/dictionary.js';
 
+// CONST
+const development = inject('development');
 const sessionToken = inject('sessionToken');
+const lang = inject('lang');
+
+// INJECTS
+const session = inject('session');
+const orders = inject('orders');
+const user = inject('user');
+const db = inject('db');
 
 //<< DEV
 const log = ref('');
-const development = ref(false);
 const testVar = ref(0);
 // >>
-
-onMounted(() => {
-  if (window.location.search === '?dev') {
-    development.value = true;
-  }
-});
-
-// MULTI LANGUAGE
-const langCodeImg = computed(() => {
-  const langCodeImgs = {
-    EN: 'usa',
-    VN: 'vietnam',
-  };
-  return langCodeImgs[session.language];
-});
-const languages = ['EN', 'VN'];
-const toggleLanguage = () => {
-  session.language = languages[0];
-  languages.shift();
-  languages.push(session.language);
-  session.language = languages[0];
-};
-const lang = function (key) {
-  try {
-    return computed(() => dict[key][session.language]);
-  } catch (error) {
-    return key;
-  }
-};
-
-provide('lang', lang);
-
-// API
-const lockerOrder = 'wunderbar_order';
-const lockerOrders = 'wunderbar_orders';
-const lockerSession = 'wunderbar_session';
-const apiUrl =
-  'https://vq4h0iro9k.execute-api.ap-southeast-1.amazonaws.com/locker';
-
-// SESSION
-const session = reactive({
-  id: '',
-  customer: '',
-  table: '',
-  status: 'Ordering',
-  language: 'EN',
-  order: { items: [], price: 0, priceBeforeTax: 0 },
-});
-
-// DEV : Reset sesssion
-const resetSession = () => {
-  session.id = '';
-  session.customer = '';
-  session.table = '';
-  session.status = 'Ordering';
-  session.order = { items: [], price: 0, priceBeforeTax: 0 };
-  session.language = 'EN';
-  orders = reactive({});
-
-  updateOrderHistory();
-  updateCloudSession();
-  updateOrder();
-};
-
+const order = reactive({});
 // Sync session with cloud
 watch(
-  () => session,
+  order,
   () => {
-    session.order.price =
+    order.price =
       Math.floor(
-        session.order.items.reduce((total, item) => total + item.price, 0) *
+        order.items.reduce((total, item) => total + item.price, 0) *
           (1 + tax) *
           100
       ) / 100;
-    session.order.priceBeforeTax =
+    order.priceBeforeTax =
       Math.floor(
-        session.order.items.reduce((total, item) => total + item.price, 0) * 100
+        order.items.reduce((total, item) => total + item.price, 0) * 100
       ) / 100;
 
     // Make description
     let description = '';
-    for (let i = 0; i < session.order.items.length; i++) {
+    for (let i = 0; i < order.items.length; i++) {
       // Make description
-      const item = session.order.items[i];
+      const item = order.items[i];
       description += '{ ' + (+i + 1) + ' | ' + item.name + ' | ';
       const options = [];
 
@@ -590,78 +489,15 @@ watch(
       description += options.join(' ');
       description += ' } \n';
     }
-    session.order.description = description;
+    order.description = description;
     //
-    updateCloudSession();
+    db.upsert.session();
   },
   { deep: true }
 );
-//
-onMounted(async () => {
-  const cloudSession = await getCloudSession();
-  if (!cloudSession.id) {
-    session.id = v4();
-    session.status = 'Ordering';
-    session.language = 'EN';
-    return;
-  }
-  session.id = cloudSession.id;
-  session.customer = cloudSession.customer;
-  session.table = cloudSession.table;
-  session.status = cloudSession.status;
-  session.order = cloudSession.order;
-  session.language = cloudSession.language;
-
-  // Order history
-  const cloudOrderHistory = await getOrderHistory();
-});
-//
-async function updateCloudSession() {
-  await fetch(apiUrl + '/upsert/' + lockerSession, {
-    method: 'POST',
-    headers: new Headers({
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + sessionToken.value,
-    }),
-    body: JSON.stringify(session),
-  });
-}
-
-async function getCloudSession() {
-  const response = await fetch(apiUrl + '/get/' + lockerSession, {
-    headers: new Headers({ Authorization: 'Bearer ' + sessionToken.value }),
-  });
-  const _cloudSession = await response.json();
-
-  return _cloudSession;
-}
-
-async function updateOrderHistory() {
-  const _session = JSON.parse(JSON.stringify(session));
-  orders[_session.id] = _session;
-  orders[_session.id].status = _session.status;
-
-  orders[_session.id].timestamp = getTimestamp();
-  fetch(apiUrl + '/upsert/' + lockerOrders, {
-    method: 'POST',
-    headers: new Headers({
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + sessionToken.value,
-    }),
-    body: JSON.stringify(orders),
-  });
-}
-
-async function getOrderHistory() {
-  const response = await fetch(apiUrl + '/get/' + lockerOrders, {
-    headers: new Headers({ Authorization: 'Bearer ' + sessionToken.value }),
-  });
-  const _cloudOrders = await response.json();
-  return _cloudOrders;
-}
 
 // UI
-const notifications = ref([{ id: 'ok' }]);
+
 const UI = reactive({
   cancelConfirm: false,
   warnTooManyItems: false,
@@ -669,14 +505,10 @@ const UI = reactive({
 
 // :P
 watchEffect(() => {
-  if (session.order.items.length > 5 && !UI.warnTooManyItems) {
+  if (order.items.length > 5 && !UI.warnTooManyItems) {
     notifications.value.push(lang('tooManyItems'));
   }
 });
-
-// ORDERS
-let orders = reactive({});
-provide('orders', orders);
 
 // CART (CURRENT ITEM. BUILDING ITEM, VALIDATION, ADD ITEM)
 const currentItem = ref({ type: '' });
@@ -831,7 +663,7 @@ const addItem = () => {
     addons: currentItem.value.addons,
     description: description,
   };
-  session.order.items.push(newItem);
+  order.items.push(newItem);
   // Reset currentItem
   currentItem.value = { type: '' };
   step.value = 1;
@@ -883,62 +715,18 @@ const selectOption = (option, value) => {
 // ORDER
 const tax = 0.0725;
 const orderBackend = computed(() => {
-  if (session.order.items.length === 0) {
+  if (order.items.length === 0) {
     return {};
   }
   return {
     id: session.id,
-    description: session.order.description,
+    description: order.description,
     customer: session.customer,
     table: session.table,
-    price: session.order.price,
+    price: order.price,
     status: session.status,
   };
 });
-
-async function getOrderStatus() {
-  // Expect: orderId and status from cashier side
-
-  const response = await fetch(apiUrl + '/get/' + lockerOrder, {
-    headers: {
-      Authorization: 'Bearer ' + sessionToken.value,
-    },
-  });
-  const order = await response.json();
-
-  if (order.status === 'Processing' && session.status !== 'Processing') {
-    notifications.value.push(lang('orderProcessing'));
-    session.status = 'Processing';
-  }
-  if (order.status === 'Done' && session.status !== 'Done') {
-    notifications.value.push(lang('orderCompleted'));
-    session.status = 'Done';
-  }
-}
-
-setInterval(function () {
-  if (!sessionToken.value) {
-    return;
-  }
-  if (testVar.value < 10) {
-    getOrderStatus();
-    getOrderHistory();
-    if (development.value) {
-      testVar.value++;
-    }
-  }
-}, 2000);
-
-function updateOrder() {
-  fetch(apiUrl + '/upsert/' + lockerOrder, {
-    method: 'POST',
-    headers: new Headers({
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + sessionToken.value,
-    }),
-    body: JSON.stringify(orderBackend.value),
-  });
-}
 
 const getTimestamp = function () {
   return new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
@@ -947,7 +735,7 @@ const getTimestamp = function () {
 };
 
 const placeOrder = function () {
-  if (session.order.items.length === 0) return;
+  if (order.items.length === 0) return;
   session.status = 'Received';
   // Add GMT+7 timestamp to order format yyyy-mm-dd hh:mm:ss
   orderBackend.value.timeStamp = getTimestamp();
@@ -967,7 +755,7 @@ const newOrder = function () {
   session.id = v4();
 
   if (session.status !== 'Cancelled') {
-    session.order.items = [];
+    order.items = [];
   }
   session.status = 'Ordering';
   updateOrder();

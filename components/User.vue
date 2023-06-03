@@ -86,6 +86,8 @@
 </template>
 <script setup>
 import axios from 'axios';
+import Cookies from 'js-cookie';
+
 const lang = inject('lang');
 const sessionToken = inject('sessionToken');
 
@@ -134,7 +136,7 @@ const doLogin = async function () {
     );
 
     console.log(response.data);
-    sessionToken.value = response.data.access_token;
+    Cookies.set('sessionToken', response.data.access_token, { expires: 7 });
     // Use the access token from the response for API calls or other operations
   } catch (error) {
     console.error(error);
