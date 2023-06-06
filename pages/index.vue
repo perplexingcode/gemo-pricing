@@ -706,13 +706,24 @@ const getTimestamp = function () {
 
 const placeOrder = function () {
   if (order.items.length === 0) return;
+  const isEdit = order.isEditing === true;
+  console.log(isEdit);
   // update
   order.status = 'Received';
   order.timestamp = getTimestamp();
   order.date = new Date().toISOString().substring(0, 10);
   // push
   db.upsert.order(deepClone(order));
+  if (isEdit) {
+    notifications.value.push(lang('orderUpdated'));
+    // remove old order
+    const editedOrder = orders.value.find((o) => o.id === order.id);
+    orders.value.splice(orders.value.indexOf(editedOrder), 1);
+    // remove state
+    delete order.isEditing;
+  }
   orders.value.push(deepClone(order));
+
   // reset
   order.id = v4();
   order.items = [];
@@ -906,9 +917,11 @@ provide('items', items);
 .items-more {
   @apply border-2 p-1 text-white bg-teal-800 rounded text-xs;
   position: absolute;
-  bottom: 0;
+  white-space: nowrap;
+  width: fit-content;
+  top: 2rem;
   left: 50%;
-  transform: translate(-50%, 0);
+  transform: translate(-52%, 0);
 }
 .order:hover .items-more {
   display: none;

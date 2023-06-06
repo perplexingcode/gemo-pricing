@@ -22,6 +22,14 @@ body {
   text-align: center;
 }
 
+/* Img */
+.icon-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
 .app-title {
   font-family: 'Peachy Pure', cursive;
   font-size: 8rem;

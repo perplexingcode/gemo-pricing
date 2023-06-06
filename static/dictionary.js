@@ -59,6 +59,14 @@ export default {
     EN: 'Current orders',
     VN: 'Đơn hàng hiện tại',
   },
+  done: {
+    EN: 'Done',
+    VN: 'Hoàn thành',
+  },
+  editOrder: {
+    EN: 'Edit order',
+    VN: 'Đổi món',
+  },
   egg: {
     EN: 'Egg',
     VN: 'Trứng',
@@ -70,6 +78,10 @@ export default {
   done: {
     EN: 'Done',
     VN: 'Hoàn thành',
+  },
+  feedback: {
+    EN: 'Feedback',
+    VN: 'Góp ý',
   },
   filling: {
     EN: 'Filling',
@@ -163,6 +175,10 @@ export default {
     EN: 'Processing order...',
     VN: 'Đang chế biến...',
   },
+  orderUpdated: {
+    EN: 'Order updated',
+    VN: 'Đơn đã được cập nhật',
+  },
   password: {
     EN: 'Password',
     VN: 'Mật khẩu',
@@ -206,6 +222,10 @@ export default {
   spread: {
     EN: 'Spread',
     VN: 'Phết',
+  },
+  reorder: {
+    EN: 'Reorder',
+    VN: 'Đặt lại',
   },
   table: {
     EN: 'Table',

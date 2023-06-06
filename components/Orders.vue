@@ -11,6 +11,15 @@
       class="order flex flex-col"
       :class="{ compact: order.items.length > 12 }"
     >
+      <div class="edit-icon">
+        <img
+          width="26"
+          height="26"
+          src="https://img.icons8.com/metro/26/edit.png"
+          alt="edit"
+          class="icon-circle"
+        />
+      </div>
       <div class="header flex">
         <div class="order-items-wrapper">
           <div
@@ -53,11 +62,13 @@
             <p>{{ lang(order.status.toLowerCase()).value }}</p>
           </div>
           <div
-            class="w-full flex flex-col items-center justify-center text-xs"
-            :class="'order-detail-btn'"
-            :popovertarget="'order-detail-' + order.id"
+            class="w-full flex flex-col items-center justify-center text-xs cursor-pointer"
+            :class="['order-detail-btn', order.status.toLowerCase()]"
+            @click="doOrderAction(order)"
           >
-            <p>{{ lang('seeDetails').value }}</p>
+            <p v-if="statusActions[order.status]">
+              {{ lang(statusActions[order.status]).value }}
+            </p>
           </div>
         </div>
       </div>
@@ -68,6 +79,8 @@
   </div>
 </template>
 <script setup>
+import { deepClone } from '~/static/util';
+
 const props = defineProps({
   orders: {
     type: String,
@@ -80,7 +93,47 @@ const props = defineProps({
 });
 const lang = inject('lang');
 const items = inject('items');
-
 const orders = inject(props.orders);
+const allOrders = inject('orders');
+const currentOrder = inject('order');
+
+const statusActions = {
+  Received: 'editOrder',
+  Processing: '',
+  Done: 'reorder',
+  Cancelled: 'feedback',
+};
+
+const doOrderAction = (order) => {
+  switch (order.status) {
+    case 'Received':
+      editOrder(order);
+      break;
+    case 'Processing':
+      break;
+    case 'Done':
+      reorder(order);
+      break;
+    case 'Cancelled':
+      feedback();
+      break;
+    default:
+      break;
+  }
+};
+
+const editOrder = (order) => {
+  order = deepClone(order);
+  currentOrder.items = order.items;
+  currentOrder.status = order.status;
+  currentOrder.id = order.id;
+  currentOrder.status = 'Ordering';
+  currentOrder.isEditing = true;
+};
+
+const reorder = (order) => {
+  order = deepClone(order);
+  allOrders.value.push(order);
+};
 </script>
 <style></style>

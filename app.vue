@@ -128,30 +128,32 @@ const db = {
 
 // SYNC WITH CLOUD
 onMounted(async () => {
-  //dev mode
-  if (window.location.search === '?dev') development.value = true;
+  nextTick(async () => {
+    //dev mode
+    if (window.location.search === '?dev') development.value = true;
 
-  // get sessionToken from cookie
-  sessionToken.value = Cookies.get('sessionToken') || null;
+    // get sessionToken from cookie
+    sessionToken.value = Cookies.get('sessionToken') || null;
 
-  // fetch session data from server
-  // if (!sessionToken.value) return; // DEV
-  const cloudSession = await db.get.session();
-  // console.log(cloudSession);
-  if (!cloudSession.id) {
-    session.id = v4();
-    session.status = 'Ordering';
-    session.language = 'EN';
-    return;
-  }
-  session.id = cloudSession.id;
-  session.language = cloudSession.language;
-  session.item = cloudSession.item;
-  session.customer = cloudSession.customer;
-  session.table = cloudSession.table;
+    // fetch session data from server
+    // if (!sessionToken.value) return; // DEV
+    const cloudSession = await db.get.session();
+    // console.log(cloudSession);
+    if (!cloudSession.id) {
+      session.id = v4();
+      session.status = 'Ordering';
+      session.language = 'EN';
+      return;
+    }
+    session.id = cloudSession.id;
+    session.language = cloudSession.language;
+    session.item = cloudSession.item;
+    session.customer = cloudSession.customer;
+    session.table = cloudSession.table;
 
-  // All orders
-  orders.value = await getCloudOrders();
+    // All orders
+    orders.value = await getCloudOrders();
+  });
 });
 
 const sortOrder = {
