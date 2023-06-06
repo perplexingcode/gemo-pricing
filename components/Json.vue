@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3>{{ props.name }}</h3>
+    <h3 v-if="props.name">{{ props.name }}</h3>
     <JsonViewer :value="props.value" :expandDepth="10" copyable boxed sort />
   </div>
 </template>

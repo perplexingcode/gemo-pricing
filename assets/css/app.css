@@ -108,13 +108,6 @@ select {
   @apply border-2 border-teal-800 rounded p-2;
 }
 
-.btn-cancel {
-  @apply bg-gray-500 text-white rounded;
-}
-.btn-cancel:hover {
-  @apply bg-red-500 text-white rounded;
-}
-
 .cancel-confirm {
   position: fixed;
   top: 50vh;
@@ -198,6 +191,8 @@ select {
   /* needed - do not touch */
   content: attr(data-tooltip);
   position: absolute;
+  z-index: 100;
+  min-width: 100px;
   opacity: 0;
 
   /* customizable */

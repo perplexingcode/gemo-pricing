@@ -29,6 +29,24 @@
       </div>
     </div>
   </div>
+  <!--  -->
+  <button
+    v-if="order.status == 'Received'"
+    @click="UI.cancelConfirm = true"
+    class="btn-cancel"
+  >
+    {{ lang('orderCancel').value }}
+  </button>
+  <button v-if="order.status == 'Processing'" disabled class="btn-processing">
+    {{ lang('orderProcessingButton').value }}
+  </button>
+  <button
+    v-if="order.status == 'Cancelled' || order.status == 'Done'"
+    @click="newOrder"
+    class="btn-new-order"
+  >
+    {{ lang('orderNew').value }}
+  </button>
 </template>
 <script setup></script>
 <style></style>

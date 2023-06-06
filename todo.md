@@ -1,2 +1,3 @@
 - smooth placeholder to label
 - smooth transition
+- bring notification to app.vue

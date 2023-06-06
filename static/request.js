@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie';
 export async function request(path, method, data, header) {
-  const { backendUrl } = useRuntimeConfig();
+  const { backendUrl } = useRuntimeConfig().public;
   const sessionToken = Cookies.get('sessionToken') || null;
   let config = {
     method: method,

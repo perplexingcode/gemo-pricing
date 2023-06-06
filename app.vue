@@ -14,9 +14,10 @@
       <button @click="resetSession">Reset session</button>
       <p class="py-1">{{ session.status }}</p>
       <div class="flex">
+        <!-- <Json name="Log" :value="log" /> -->
         <Json name="Session" :value="session" />
-        <Json name="Log" :value="log" />
         <Json name="User" :value="user" />
+        <Json name="Order" :value="order" />
         <Json name="Orders" :value="orders" />
       </div>
       <input v-model="testVar" />
@@ -30,7 +31,13 @@ import { v4 } from 'uuid';
 import Cookies from 'js-cookie';
 import dict from '~/static/dictionary.js';
 
-import { upsert, getById, getAll } from '~/static/db.js';
+import {
+  getAll,
+  getById,
+  getByIdProjection,
+  upsert,
+  query,
+} from '~/static/db.js';
 
 //<< DEV
 const development = ref(false);
@@ -55,8 +62,15 @@ const toggleLanguage = () => {
   languages.push(session.language);
   session.language = languages[0];
 };
-const lang = function (key) {
+const lang = function (key, counter) {
   try {
+    if (!key) return;
+    if (!dict[key]) return key;
+    if (!dict[key][session.language]) return key;
+    if (counter && session.language === 'EN')
+      return counter > 1
+        ? computed(() => dict[key][session.language].plural)
+        : computed(() => dict[key][session.language].singular);
     return computed(() => dict[key][session.language]);
   } catch (error) {
     return key;
@@ -68,12 +82,11 @@ const notifications = ref([{ id: 'ok' }]);
 
 // SESSION, USER, ORDERS
 const session = reactive({
-  id: null,
+  id: 'danchoiasia',
   language: 'EN',
   customer: null,
   table: null,
   item: { type: '' },
-  orderId: null,
 });
 
 const user = reactive({
@@ -84,7 +97,18 @@ const user = reactive({
   orders: {},
 });
 
-const orders = reactive({});
+const order = reactive({
+  id: v4(),
+  userId: 'danchoiasia',
+  status: 'Ordering',
+  items: [],
+  price: 0,
+  priceBeforeTax: 0,
+  table: computed(() => session.table),
+  customer: computed(() => session.customer),
+});
+
+const orders = ref([]);
 
 // DATABASE
 const db = {
@@ -102,6 +126,7 @@ const db = {
   },
 };
 
+// SYNC WITH CLOUD
 onMounted(async () => {
   //dev mode
   if (window.location.search === '?dev') development.value = true;
@@ -110,35 +135,44 @@ onMounted(async () => {
   sessionToken.value = Cookies.get('sessionToken') || null;
 
   // fetch session data from server
-  if (!sessionToken.value) return;
-
-  const cloudSession = await getCloudSession();
-  if (!cloudSession.id) {dt8y1wjnhnhi
+  // if (!sessionToken.value) return; // DEV
+  const cloudSession = await db.get.session();
+  // console.log(cloudSession);
+  if (!cloudSession.id) {
     session.id = v4();
     session.status = 'Ordering';
     session.language = 'EN';
     return;
   }
   session.id = cloudSession.id;
+  session.language = cloudSession.language;
+  session.item = cloudSession.item;
   session.customer = cloudSession.customer;
   session.table = cloudSession.table;
-  session.language = cloudSession.language;
 
-  // Order history
-  await getCloudOrders();
+  // All orders
+  orders.value = await getCloudOrders();
 });
 
+const sortOrder = {
+  Processing: 0,
+  Ordering: 1,
+  Received: 2,
+  Done: 3,
+  Cancelled: 4,
+};
+
 setInterval(function () {
-  if (!sessionToken.value) {
-    return;
-  }
-  if (testVar.value < 10) {
-    db.get.orderStatus();
-    db.get.orders();
-    if (development.value) {
-      testVar.value++;
-    }
-  }
+  // if (!sessionToken.value) {
+  //   return;
+  // }
+  // if (testVar.value < 10) {
+  //   db.get.orderStatus();
+  //   db.get.orders();
+  //   if (development.value) {
+  //     testVar.value++;
+  //   }
+  // }
 }, 2000);
 
 // PROVIDES
@@ -148,18 +182,20 @@ provide('sessionToken', sessionToken);
 provide('notifications', notifications);
 provide('session', session);
 provide('user', user);
+provide('order', order);
 provide('orders', orders);
+provide('sortOrder', sortOrder);
 provide('db', db);
 
 // FUNCTION DECLARATIONS
 
 // Get
-async function getCloudSession(id) {
-  return await getById('wunderbar_session', id || session.id);
+async function getCloudSession() {
+  return (await getById('wunderbar_session', session.id)).data._rawValue;
 }
 
 async function getCloudOrders() {
-  return await getAll('wunderbar_order');
+  return (await query('wunderbar_order', 'userId', session.id)).data._rawValue;
 }
 
 async function getCloudUser(id) {
@@ -192,8 +228,8 @@ async function upsertCloudSession() {
   return await upsert('wunderbar_session', session);
 }
 
-async function upsertCloudOrder() {
-  return await upsert('wunderbar_order', session.order);
+async function upsertCloudOrder(order) {
+  return await upsert('wunderbar_order', order);
 }
 
 async function upsertCloudUser() {
@@ -205,13 +241,11 @@ const resetSession = () => {
   session.id = '';
   session.customer = '';
   session.table = '';
-  session.status = 'Ordering';
-  session.order = { id: v4(), items: [], price: 0, priceBeforeTax: 0 };
   session.language = 'EN';
-  orders = reactive({});
+  orders.value = [];
 
-  updateOrderHistory();
-  updateCloudSession();
-  updateOrder();
+  db.upsert.session();
+  db.upsert.user();
+  db.upsert.order();
 };
 </script>

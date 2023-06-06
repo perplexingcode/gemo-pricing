@@ -27,3 +27,6 @@ export const deleteById = async function (table, id) {
 export const getAll = async function (table) {
   return await request('/all/' + table, 'GET');
 };
+export const query = async function (table, key, value) {
+  return await request('/query/' + table + '/' + key + '/' + value, 'GET');
+};

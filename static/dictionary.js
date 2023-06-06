@@ -23,6 +23,10 @@ export default {
     EN: 'Cancel',
     VN: 'Hủy',
   },
+  cancelled: {
+    EN: 'Cancelled',
+    VN: 'Đã hủy',
+  },
   checkout: {
     EN: 'Checkout',
     VN: 'Tính tiền',
@@ -51,13 +55,21 @@ export default {
     EN: 'Current item',
     VN: 'Món đang chọn',
   },
-  drink: {
-    EN: 'Drink',
-    VN: 'Đồ uống',
+  currentOrders: {
+    EN: 'Current orders',
+    VN: 'Đơn hàng hiện tại',
   },
   egg: {
     EN: 'Egg',
     VN: 'Trứng',
+  },
+  drink: {
+    EN: 'Drink',
+    VN: 'Đồ uống',
+  },
+  done: {
+    EN: 'Done',
+    VN: 'Hoàn thành',
   },
   filling: {
     EN: 'Filling',
@@ -86,6 +98,14 @@ export default {
   login: {
     EN: 'Login',
     VN: 'Đăng nhập',
+  },
+  item: {
+    EN: { singular: 'Item', plural: 'Items' },
+    VN: 'Món',
+  },
+  itemMore: {
+    EN: { singular: 'item more', plural: 'items more' },
+    VN: 'món nữa',
   },
   milk: {
     EN: 'Milk',
@@ -151,9 +171,21 @@ export default {
     EN: 'Confirm password',
     VN: 'Xác nhận mật khẩu',
   },
+  processing: {
+    EN: 'Processing',
+    VN: 'Đang chế biến',
+  },
+  received: {
+    EN: 'Received',
+    VN: 'Đã tiếp nhận',
+  },
   sandwich: {
     EN: 'Sandwich',
     VN: 'Bánh mì kẹp',
+  },
+  seeDetails: {
+    EN: 'See details',
+    VN: 'Xem chi tiết',
   },
   selectItem: {
     EN: 'Select item',
@@ -214,6 +246,10 @@ export default {
   yourName: {
     EN: 'Your name',
     VN: 'Tên của bạn',
+  },
+  yourOrders: {
+    EN: 'Your orders',
+    VN: 'Danh sách đơn hàng',
   },
   yourTable: {
     EN: 'Your table',

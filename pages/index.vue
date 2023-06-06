@@ -5,9 +5,13 @@
       <div class="header text-center p-3">
         <div
           v-if="notifications.length > 0"
-          class="notifications p-3 fixed sm:top-5 top-12 left-0 right-0 z-10"
+          class="notifications p-3 fixed sm:top-5 top-12 left-0 right-0 z-10 w-fit m-auto"
         >
-          <div v-for="(noti, index) in notifications" :key="noti.id">
+          <div
+            v-for="(noti, index) in notifications"
+            :key="noti.id"
+            class="w-fit m-auto"
+          >
             <div
               v-if="noti.value"
               class="p-2 mb-3 bg-yellow-300 rounded sm:w-80 w-90 m-auto border-2 border-green-900"
@@ -25,7 +29,7 @@
       </div>
       <div class="content mx-auto w-fit flex sm:gap-10 flex-col sm:flex-row">
         <transition name="height-transition" mode="out-in">
-          <div class="item-details card">
+          <div class="item-details card h-fit">
             <div class="nav flex justify-around items-center">
               <div>
                 <img
@@ -262,153 +266,142 @@
             </div>
           </div>
         </transition>
-        <div mclass="order-details">
-          <div class="invoice">
-            <div class="border h-fit">
-              <div class="text-center">
-                <h1 v-if="order.status == 'Ordering'" class="text-xl font-bold">
-                  {{ lang('checkout').value }}
-                </h1>
-                <h1
-                  v-if="
-                    order.status == 'Processing' || order.status == 'Received'
-                  "
-                  class="text-xl font-bold"
-                >
-                  {{ lang('orderPlaced').value }}
-                </h1>
-                <h1
-                  v-if="order.status == 'Cancelled'"
-                  class="text-xl font-bold"
-                >
-                  {{ lang('orderCancelled').value }}
-                </h1>
-                <h1 v-if="order.status == 'Done'" class="text-xl font-bold">
-                  {{ lang('orderDoneTitle').value }}
-                </h1>
-              </div>
-              <div class="invoice-items">
-                <div
-                  v-for="(item, index) in order.items"
-                  :key="item.id"
-                  class="flex"
-                  :data-tooltip="item.description"
-                >
+        <div class="flex flex-col">
+          <div class="section-order">
+            <div class="invoice m-auto">
+              <div class="border h-fit">
+                <div class="text-center">
+                  <h1
+                    v-if="order.status == 'Ordering'"
+                    class="text-xl font-bold"
+                  >
+                    {{ lang('checkout').value }}
+                  </h1>
+                  <h1
+                    v-if="
+                      order.status == 'Processing' || order.status == 'Received'
+                    "
+                    class="text-xl font-bold"
+                  >
+                    {{ lang('orderPlaced').value }}
+                  </h1>
+                  <h1
+                    v-if="order.status == 'Cancelled'"
+                    class="text-xl font-bold"
+                  >
+                    {{ lang('orderCancelled').value }}
+                  </h1>
+                  <h1 v-if="order.status == 'Done'" class="text-xl font-bold">
+                    {{ lang('orderDoneTitle').value }}
+                  </h1>
+                </div>
+                <div class="invoice-items">
+                  <div
+                    v-for="(item, index) in order.items"
+                    :key="item.id"
+                    class="flex"
+                    :data-tooltip="item.description"
+                  >
+                    <div class="invoice-item-name">
+                      <p>{{ item.name }}</p>
+                    </div>
+                    <div class="invoice-dots"></div>
+                    <p>${{ item.price }}</p>
+                    <p
+                      @click="order.items.splice(index, 1)"
+                      class="delete-item pl-2 cursor-pointer"
+                    >
+                      X
+                    </p>
+                  </div>
+                </div>
+                <p v-if="order.items.length" class="text-xs text-center">
+                  {{ lang('hoverItem').value }}
+                </p>
+                <hr class="mt-1 mb-1" />
+                <div class="invoice-tax flex">
                   <div class="invoice-item-name">
-                    <p>{{ item.name }}</p>
+                    <p>
+                      {{ lang('tax').value }} ({{
+                        Math.floor(tax * 10000) / 100
+                      }}%)
+                    </p>
                   </div>
                   <div class="invoice-dots"></div>
-                  <p>${{ item.price }}</p>
-                  <p
-                    @click="order.items.splice(index, 1)"
-                    class="delete-item pl-2 cursor-pointer"
-                  >
-                    X
-                  </p>
-                </div>
-              </div>
-              <p v-if="order.items.length" class="text-xs text-center">
-                {{ lang('hoverItem').value }}
-              </p>
-              <hr class="mt-1 mb-1" />
-              <div class="invoice-tax flex">
-                <div class="invoice-item-name">
                   <p>
-                    {{ lang('tax').value }} ({{
-                      Math.floor(tax * 10000) / 100
-                    }}%)
+                    ${{ Math.floor(order.priceBeforeTax * tax * 100) / 100 }}
                   </p>
                 </div>
-                <div class="invoice-dots"></div>
-                <p>${{ Math.floor(order.priceBeforeTax * tax * 100) / 100 }}</p>
-              </div>
-              <div class="invoice-total flex">
-                <p>{{ lang('total').value }}</p>
-                <div class="invoice-dots"></div>
-                <p>${{ order.price }}</p>
+                <div class="invoice-total flex">
+                  <p>{{ lang('total').value }}</p>
+                  <div class="invoice-dots"></div>
+                  <p>${{ order.price }}</p>
+                </div>
               </div>
             </div>
-          </div>
-          <div v-if="order.status == 'Ordering'" class="flex flex-col customer">
-            <label class="pl-4 pt-1">{{ lang('name').value }}</label>
-            <input
-              class="customer-name"
-              v-model="session.customer"
-              :placeholder="lang('yourName').value"
-            />
-            <label class="pl-4 pt-1">{{ lang('table').value }}</label>
-            <select v-model="session.table">
-              <option disabled selected value="">
-                {{ lang('yourTable').value }}
-              </option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-              <option value="7">7</option>
-              <option value="8">8</option>
-              <option value="9">9</option>
-              <option value="10">10</option>
-            </select>
-          </div>
-          <div
-            v-if="
-              order.status == 'Processing' ||
-              order.status == 'Received' ||
-              order.status == 'Done' ||
-              order.status == 'Cancelled'
-            "
-            class="pl-3"
-          >
-            <p>{{ lang('table').value }}: {{ session.table }}</p>
-            <p>{{ lang('name').value }}: {{ session.customer }}</p>
-          </div>
-          <div class="text-center">
-            <button
+            <div
               v-if="order.status == 'Ordering'"
-              @click="placeOrder"
-              :disabled="session.table === '' || order.items.length === 0"
+              class="flex flex-col customer"
             >
-              {{ lang('order').value }}
-            </button>
-            <button
-              v-if="order.status == 'Received'"
-              @click="UI.cancelConfirm = true"
-              class="btn-cancel"
+              <label class="pl-4 pt-1">{{ lang('name').value }}</label>
+              <input
+                class="customer-name"
+                v-model="session.customer"
+                :placeholder="lang('yourName').value"
+              />
+              <label class="pl-4 pt-1">{{ lang('table').value }}</label>
+              <select v-model="session.table">
+                <option disabled selected value="">
+                  {{ lang('yourTable').value }}
+                </option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select>
+            </div>
+            <div
+              v-if="
+                order.status == 'Processing' ||
+                order.status == 'Received' ||
+                order.status == 'Done' ||
+                order.status == 'Cancelled'
+              "
+              class="pl-3"
             >
-              {{ lang('orderCancel').value }}
-            </button>
-            <button
-              v-if="order.status == 'Processing'"
-              disabled
-              class="btn-processing"
-            >
-              {{ lang('orderProcessingButton').value }}
-            </button>
-            <button
-              v-if="order.status == 'Cancelled' || order.status == 'Done'"
-              @click="newOrder"
-              class="btn-new-order"
-            >
-              {{ lang('orderNew').value }}
-            </button>
-            <div v-if="UI.cancelConfirm" class="cancel-confirm">
-              <p>{{ lang('orderCancelConfirm').value }}</p>
+              <p>{{ lang('table').value }}: {{ session.table }}</p>
+              <p>{{ lang('name').value }}: {{ session.customer }}</p>
+            </div>
+            <div class="text-center">
               <button
-                @click="
-                  cancelOrder();
-                  UI.cancelConfirm = false;
-                "
+                @click="placeOrder"
+                :disabled="session.table === '' || order.items.length === 0"
               >
-                {{ lang('orderCancel').value }}
+                {{ lang('order').value }}
               </button>
-              <button @click="UI.cancelConfirm = false">
-                {{ lang('goBack').value }}
-              </button>
+              <div v-if="UI.cancelConfirm" class="cancel-confirm">
+                <p>{{ lang('orderCancelConfirm').value }}</p>
+                <button
+                  @click="
+                    cancelOrder();
+                    UI.cancelConfirm = false;
+                  "
+                >
+                  {{ lang('orderCancel').value }}
+                </button>
+                <button @click="UI.cancelConfirm = false">
+                  {{ lang('goBack').value }}
+                </button>
+              </div>
             </div>
           </div>
+          <Orders orders="indexOrders" />
         </div>
       </div>
     </div>
@@ -418,8 +411,8 @@
 // << DEV
 import { JsonViewer } from 'vue3-json-viewer';
 import 'vue3-json-viewer/dist/index.css';
-
 import { v4 } from 'uuid';
+import { deepClone } from '~/static/util';
 
 // INJECTS
 const development = inject('development');
@@ -429,17 +422,22 @@ const session = inject('session');
 const user = inject('user');
 const db = inject('db');
 const notifications = inject('notifications');
+const order = inject('order');
+const orders = inject('orders');
 
-// ORDER
-const order = reactive({
-  id: v4(),
-  status: 'Ordering',
-  items: [],
-  price: 0,
-  priceBeforeTax: 0,
+// UI
+const UI = reactive({
+  cancelConfirm: false,
+  warnTooManyItems: false,
 });
 
-// Sync session with cloud
+// :P
+watchEffect(() => {
+  if (order.items.length > 5 && !UI.warnTooManyItems) {
+    notifications.value.push(lang('tooManyItems'));
+  }
+});
+
 watch(
   order,
   () => {
@@ -492,20 +490,6 @@ watch(
   },
   { deep: true }
 );
-
-// UI
-
-const UI = reactive({
-  cancelConfirm: false,
-  warnTooManyItems: false,
-});
-
-// :P
-watchEffect(() => {
-  if (order.items.length > 5 && !UI.warnTooManyItems) {
-    notifications.value.push(lang('tooManyItems'));
-  }
-});
 
 // CART (CURRENT ITEM. BUILDING ITEM, VALIDATION, ADD ITEM)
 session.item = ref({ type: '' });
@@ -655,6 +639,7 @@ const addItem = () => {
   }
   const newItem = {
     id: v4(),
+    key: session.item.key,
     name: session.item.name,
     price: session.item.price,
     options: session.item.options,
@@ -712,19 +697,6 @@ const selectOption = (option, value) => {
 
 // ORDER
 const tax = 0.0725;
-const orderBackend = computed(() => {
-  if (order.items.length === 0) {
-    return {};
-  }
-  return {
-    id: session.id,
-    description: order.description,
-    customer: session.customer,
-    table: session.table,
-    price: order.price,
-    status: order.status,
-  };
-});
 
 const getTimestamp = function () {
   return new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
@@ -734,30 +706,35 @@ const getTimestamp = function () {
 
 const placeOrder = function () {
   if (order.items.length === 0) return;
+  // update
   order.status = 'Received';
-  // Add GMT+7 timestamp to order format yyyy-mm-dd hh:mm:ss
-  orderBackend.value.timeStamp = getTimestamp();
-  updateOrder();
+  order.timestamp = getTimestamp();
+  order.date = new Date().toISOString().substring(0, 10);
+  // push
+  db.upsert.order(deepClone(order));
+  orders.value.push(deepClone(order));
+  // reset
+  order.id = v4();
+  order.items = [];
+  order.status = 'Ordering';
+  order.timestamp = '';
+  order.date = '';
   notifications.value.push(lang('orderPlaced'));
-  updateOrderHistory();
 };
 
 function cancelOrder() {
   order.status = 'Cancelled';
-  updateOrder();
+  db.upsert.order(order);
   notifications.value.push(lang('orderCancelled'));
-  updateOrderHistory();
 }
 
-const newOrder = function () {
-  session.id = v4();
-
-  if (order.status !== 'Cancelled') {
-    order.items = [];
-  }
-  order.status = 'Ordering';
-  updateOrder();
-};
+// Computed
+const sortOrder = inject('sortOrder');
+const sortedOrders = computed(() => {
+  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+  const todayOrders = orders.value.filter((order) => order.date === today); // Filter orders with today's date
+  return todayOrders.sort((a, b) => sortOrder[a.status] - sortOrder[b.status]); // Sort the filtered orders
+});
 
 // MODULE: DATA
 const drinks = computed(() => {
@@ -888,5 +865,89 @@ const drinkAddons = {
     },
   },
 };
+
+// PROVIDES
+provide('indexOrders', sortedOrders);
+provide('items', items);
 </script>
-<style></style>
+<style>
+.order {
+  @apply p-1 my-1 border-2 border-green-800 rounded bg-teal-100;
+  gap: 10px;
+  min-height: 72px;
+  height: 72px;
+  overflow-y: hidden;
+}
+
+.order-items {
+  display: grid;
+  grid-template-columns: repeat(6, 30px);
+  width: 190px;
+}
+.order-items.big-icon {
+  grid-template-columns: repeat(3, 64px);
+}
+
+.order.compact {
+  height: 75px;
+}
+
+.order.compact .order-status {
+  margin-top: 1px;
+}
+
+.order:hover {
+  overflow-y: visible;
+  height: auto;
+}
+.order-items-wrapper {
+  position: relative;
+}
+.items-more {
+  @apply border-2 p-1 text-white bg-teal-800 rounded text-xs;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 0);
+}
+.order:hover .items-more {
+  display: none;
+}
+
+.order-status {
+  padding: 1rem;
+  font-size: 0.9rem;
+  height: 30px;
+  width: 142px;
+}
+
+.received .order-status {
+  @apply bg-green-800 text-white rounded;
+}
+.processing .order-status {
+  @apply bg-yellow-300 text-blue-600 rounded;
+}
+
+.done .order-status {
+  @apply bg-teal-500 text-white rounded;
+}
+
+.cancelled .order-status {
+  @apply bg-gray-500 text-white rounded;
+}
+
+.order-detail-btn {
+  height: 30px;
+  width: 1 30px;
+}
+
+.btn-cancel:hover {
+  @apply bg-red-500 text-white rounded;
+}
+/* .btn-cancel {
+  @apply bg-gray-500 text-white rounded;
+}
+.btn-cancel:hover {
+  @apply bg-red-500 text-white rounded;
+} */
+</style>

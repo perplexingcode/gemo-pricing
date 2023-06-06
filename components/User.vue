@@ -9,7 +9,7 @@
         <img src="~/assets/img/profile-64.png" />
       </div>
     </div>
-    <Transition appear="true" name="fade">
+    <Transition :appear="true" name="fade">
       <div v-show="isShownLoginPanel && !sessionToken" class="login-panel">
         <h3 class="font-bold ml-[-0.5rem] mt-[-0.25rem]">Login</h3>
         <div class="input-group mb-2">
@@ -77,7 +77,12 @@
         </div>
         <div class="content">
           <div class="orders">
-            <div></div>
+            <div class="header">
+              <h4 class="font-bold">{{ lang('yourOrders').value }}</h4>
+            </div>
+            <div class="content">
+              <Orders orders="userOrders" />
+            </div>
           </div>
         </div>
       </div>
@@ -90,6 +95,30 @@ import Cookies from 'js-cookie';
 
 const lang = inject('lang');
 const sessionToken = inject('sessionToken');
+const orders = inject('orders');
+
+const sortOrder = inject('sortOrder');
+const computedOrders = computed(() => {
+  return orders.value.sort((a, b) => {
+    // Compare the status of each order
+    const statusA = sortOrder[a.status];
+    const statusB = sortOrder[b.status];
+
+    if (statusA !== statusB) {
+      // Sort by status if they are different
+      return statusA - statusB;
+    } else {
+      // Sort by date if the status is the same
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+
+      // Sort in descending order (newest first)
+      return dateB - dateA;
+    }
+  });
+});
+
+provide('userOrders', computedOrders);
 
 const username = ref('buisondong20@gmail.com');
 const password = ref('Token@00');
@@ -99,22 +128,6 @@ const isShownLoginPanel = ref(false);
 const isSignup = ref(false);
 const isShownProfile = ref(false);
 
-const _orders = inject('orders');
-console.log(11, _orders);
-const orders = computed(() => {
-  try {
-    //sort order by timestamp
-    let ordersArray = [];
-    for (const order of _orders) {
-      ordersArray.push(_orders[order]);
-    }
-    ordersArray.value.sort((a, b) => {
-      return b.timestamp - a.timestamp;
-    });
-  } catch {}
-});
-// console.log(orders);
-const test = ref(null);
 const doLogin = async function () {
   if (isSignup.value) {
     isSignup.value = false;
