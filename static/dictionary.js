@@ -7,6 +7,10 @@ export default {
     EN: 'Almond Milk',
     VN: 'Sữa hạnh nhân',
   },
+  alreadyEditing: {
+    EN: 'You are already editing an order. Please complete or cancel that order before placing a new one.',
+    VN: 'Bạn đang chỉnh sửa một đơn hàng. Vui lòng hoàn thành hoặc hủy đơn hàng đó trước khi đặt đơn mới.',
+  },
   bagel: {
     EN: 'Bagel',
     VN: 'Bánh mì vòng',
@@ -65,7 +69,7 @@ export default {
   },
   editOrder: {
     EN: 'Edit order',
-    VN: 'Đổi món',
+    VN: 'Chỉnh sửa đơn hàng',
   },
   egg: {
     EN: 'Egg',

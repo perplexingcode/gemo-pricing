@@ -8,12 +8,13 @@ export async function request(path, method, data, header) {
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
-      Authorization: 'Bearer ' + sessionToken.value,
+      Authorization: 'Bearer ' + sessionToken?.value,
     },
     data: data,
   };
   if (header) {
     config.headers = { ...config.headers, ...header };
   }
+  console.log(backendUrl + path, config);
   return await useFetch(backendUrl + path, config);
 }

@@ -9,6 +9,27 @@
         :src="'https://img.icons8.com/color/48/' + langCodeImg + '.png'"
       />
     </div>
+    <div
+      v-if="notifications.length > 0"
+      class="notifications p-3 fixed sm:top-5 top-12 left-0 right-0 z-10 w-fit m-auto text-center"
+    >
+      <div
+        v-for="(noti, index) in notifications"
+        :key="noti"
+        class="w-fit m-auto"
+      >
+        <div
+          v-if="noti.message"
+          class="p-2 mb-3 bg-yellow-300 rounded sm:w-80 w-90 m-auto border-2 border-green-900"
+          :class="'noti-' + noti.type"
+          @click="notifications.splice(index, 1)"
+        >
+          <p>
+            {{ noti.message }}
+          </p>
+        </div>
+      </div>
+    </div>
     <NuxtPage />
     <div v-if="development" class="development py-5 card">
       <button @click="resetSession">Reset session</button>
@@ -19,6 +40,7 @@
         <Json name="User" :value="user" />
         <Json name="Order" :value="order" />
         <Json name="Orders" :value="orders" />
+        <Json name="Noti" :value="notifications" />
       </div>
       <input v-model="testVar" />
       <!-- expanded -->
@@ -46,6 +68,10 @@ const testVar = ref(0);
 // >>
 
 const sessionToken = ref(null);
+
+const appStates = reactive({
+  isEditingOrder: false,
+});
 
 // MULTI LANGUAGE
 const langCodeImg = computed(() => {
@@ -78,8 +104,9 @@ const lang = function (key, counter) {
 };
 
 // NOTIFICATIONS
-const notifications = ref([{ id: 'ok' }]);
-
+const notifications = ref([
+  // { message: 'ok', type: 'info' }
+]);
 // SESSION, USER, ORDERS
 const session = reactive({
   id: 'danchoiasia',
@@ -188,6 +215,28 @@ provide('order', order);
 provide('orders', orders);
 provide('sortOrder', sortOrder);
 provide('db', db);
+provide('appStates', appStates);
+
+//
+Array.prototype.pushWithId = function (...items) {
+  items.forEach((item) => {
+    const itemWithId = {
+      id: v4(),
+      ...item,
+    };
+    Array.prototype.push.call(this, itemWithId);
+  });
+};
+
+Array.prototype.pushNoti = function (noti) {
+  if (!noti) return;
+  const notiWithId = {
+    id: v4(),
+    message: noti.message || noti,
+    type: noti.type || 'info',
+  };
+  Array.prototype.push.call(this, notiWithId);
+};
 
 // FUNCTION DECLARATIONS
 
@@ -216,11 +265,11 @@ async function getCloudOrderStatus(id) {
   );
 
   if (orderStatus === 'Processing' && session.status !== 'Processing') {
-    notifications.value.push(lang('orderProcessing'));
+    notifications.value.pushNoti(lang('orderProcessing'));
     session.status = 'Processing';
   }
   if (orderStatus === 'Done' && session.status !== 'Done') {
-    notifications.value.push(lang('orderCompleted'));
+    notifications.value.pushNoti(lang('orderCompleted'));
     session.status = 'Done';
   }
 }

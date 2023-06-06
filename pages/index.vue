@@ -3,26 +3,6 @@
     <div id="main-wrap" class="">
       <User />
       <div class="header text-center p-3">
-        <div
-          v-if="notifications.length > 0"
-          class="notifications p-3 fixed sm:top-5 top-12 left-0 right-0 z-10 w-fit m-auto"
-        >
-          <div
-            v-for="(noti, index) in notifications"
-            :key="noti.id"
-            class="w-fit m-auto"
-          >
-            <div
-              v-if="noti.value"
-              class="p-2 mb-3 bg-yellow-300 rounded sm:w-80 w-90 m-auto border-2 border-green-900"
-              @click="notifications.splice(index, 1)"
-            >
-              <p>
-                {{ noti.value }}
-              </p>
-            </div>
-          </div>
-        </div>
         <h1 class="sm:mb-5 sm:mt-20 mt-10 mb-2 app-title text-yellow-200">
           Wunder bar
         </h1>
@@ -383,7 +363,11 @@
                 @click="placeOrder"
                 :disabled="session.table === '' || order.items.length === 0"
               >
-                {{ lang('order').value }}
+                {{
+                  order.isEditing
+                    ? lang('order').value
+                    : lang('saveChanges').value
+                }}
               </button>
               <div v-if="UI.cancelConfirm" class="cancel-confirm">
                 <p>{{ lang('orderCancelConfirm').value }}</p>
@@ -424,6 +408,7 @@ const db = inject('db');
 const notifications = inject('notifications');
 const order = inject('order');
 const orders = inject('orders');
+const appStates = inject('appStates');
 
 // UI
 const UI = reactive({
@@ -434,7 +419,7 @@ const UI = reactive({
 // :P
 watchEffect(() => {
   if (order.items.length > 5 && !UI.warnTooManyItems) {
-    notifications.value.push(lang('tooManyItems'));
+    notifications.value.pushNoti(lang('tooManyItems'));
   }
 });
 
@@ -715,7 +700,7 @@ const placeOrder = function () {
   // push
   db.upsert.order(deepClone(order));
   if (isEdit) {
-    notifications.value.push(lang('orderUpdated'));
+    notifications.value.pushNoti(lang('orderUpdated'));
     // remove old order
     const editedOrder = orders.value.find((o) => o.id === order.id);
     orders.value.splice(orders.value.indexOf(editedOrder), 1);
@@ -730,13 +715,13 @@ const placeOrder = function () {
   order.status = 'Ordering';
   order.timestamp = '';
   order.date = '';
-  notifications.value.push(lang('orderPlaced'));
+  notifications.value.pushNoti(lang('orderPlaced'));
 };
 
 function cancelOrder() {
   order.status = 'Cancelled';
   db.upsert.order(order);
-  notifications.value.push(lang('orderCancelled'));
+  notifications.value.pushNoti(lang('orderCancelled'));
 }
 
 // Computed
@@ -888,6 +873,10 @@ provide('items', items);
   min-height: 72px;
   height: 72px;
   overflow-y: hidden;
+}
+
+.order.is-editing {
+  @apply border-teal-300 border-[3px] bg-yellow-200;
 }
 
 .order-items {
