@@ -251,28 +251,8 @@
             <div class="invoice m-auto">
               <div class="border h-fit">
                 <div class="text-center">
-                  <h1
-                    v-if="order.status == 'Ordering'"
-                    class="text-xl font-bold"
-                  >
+                  <h1 class="text-xl font-bold">
                     {{ lang('checkout').value }}
-                  </h1>
-                  <h1
-                    v-if="
-                      order.status == 'Processing' || order.status == 'Received'
-                    "
-                    class="text-xl font-bold"
-                  >
-                    {{ lang('orderPlaced').value }}
-                  </h1>
-                  <h1
-                    v-if="order.status == 'Cancelled'"
-                    class="text-xl font-bold"
-                  >
-                    {{ lang('orderCancelled').value }}
-                  </h1>
-                  <h1 v-if="order.status == 'Done'" class="text-xl font-bold">
-                    {{ lang('orderDoneTitle').value }}
                   </h1>
                 </div>
                 <div class="invoice-items">
@@ -364,7 +344,7 @@
                 :disabled="session.table === '' || order.items.length === 0"
               >
                 {{
-                  appStates.isEditing
+                  appStates.isEditingOrder
                     ? lang('saveChanges').value
                     : lang('order').value
                 }}
@@ -691,8 +671,6 @@ const getTimestamp = function () {
 
 const placeOrder = function () {
   if (order.items.length === 0) return;
-  const isEdit = order.state.isEditing === true;
-  console.log(isEdit);
   // update
   order.status = 'Received';
   order.timestamp = getTimestamp();
@@ -703,12 +681,15 @@ const placeOrder = function () {
   db.upsert.order(_order);
 
   // CASE: Save edit changes
-  if (isEdit) {
+  if (appStates.isEditingOrder) {
+    console.log(notifications.value);
     notifications.value.pushNoti(lang('orderUpdated'));
     appStates.isEditingOrder = false;
     // remove old order
     const editedOrder = orders.value.find((o) => o.id === order.id);
     orders.value.splice(orders.value.indexOf(editedOrder), 1);
+  } else {
+    notifications.value.pushNoti(lang('orderPlaced'));
   }
   orders.value.push(deepClone(order));
 
@@ -718,7 +699,6 @@ const placeOrder = function () {
   order.status = 'Ordering';
   order.timestamp = '';
   order.date = '';
-  notifications.value.pushNoti(lang('orderPlaced'));
 };
 
 function cancelOrder() {
@@ -877,8 +857,17 @@ provide('items', items);
 .order-items {
   grid-template-columns: repeat(6, 30px);
 }
+
 .order-items.big-icon {
-  grid-template-columns: repeat(3, 64px);
+  grid-template-columns: repeat(3, 60px);
+}
+
+.order-items {
+  height: 64px;
+}
+
+.large .order-items {
+  height: auto;
 }
 
 .order.large {

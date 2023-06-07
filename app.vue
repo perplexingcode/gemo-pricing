@@ -79,7 +79,7 @@ import {
 
 //<< DEV
 const development = ref(false);
-const showDevelopment = ref(false);
+const showDevelopment = ref(true);
 const log = ref('');
 const testVar = ref(0);
 // >>
@@ -248,7 +248,7 @@ Array.prototype.pushWithId = function (...items) {
   });
 };
 
-Array.prototpushNoti = function (noti) {
+Array.prototype.pushNoti = function (noti) {
   if (!noti) return;
   const notiWithId = {
     id: v4(),
