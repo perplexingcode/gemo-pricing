@@ -676,7 +676,7 @@ const placeOrder = function () {
   order.timestamp = getTimestamp();
   order.date = new Date().toISOString().substring(0, 10);
   // push
-  const _order = deepClone(order);
+  let _order = deepClone(order);
   delete _order.state;
   db.upsert.order(_order);
 
@@ -691,7 +691,10 @@ const placeOrder = function () {
   } else {
     notifications.value.pushNoti(lang('orderPlaced'));
   }
-  orders.value.push(deepClone(order));
+
+  _order = deepClone(order);
+  _order.state.isEditing = false;
+  orders.value.push(_order);
 
   // reset
   order.id = v4();

@@ -277,6 +277,7 @@ async function getCloudOrders() {
     ...order,
     state: {
       isEditing: false,
+      isShownOptions: false,
     },
   }));
 }

@@ -78,15 +78,18 @@
             <div
               class="w-full flex flex-col items-center justify-center text-xs cursor-pointer"
               :class="['order-detail-btn', order.status.toLowerCase()]"
-              @click="doOrderAction(order)"
             >
-              <p @click="showOptions">
+              <p
+                @click="
+                  order.state.isShownOptions = !order.state.isShownOptions
+                "
+              >
                 {{ lang('options').value }}
               </p>
             </div>
           </div>
         </div>
-        <div class="option-btns flex">
+        <div v-show="order.state.isShownOptions" class="option-btns flex">
           <button class="w-full">Cancel order</button>
           <button class="w-full">Rate order</button>
         </div>
