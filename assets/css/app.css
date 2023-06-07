@@ -110,10 +110,12 @@ select {
   @apply border-2 border-teal-800 rounded p-2;
 }
 
-.cancel-confirm {
+.cancel-confirm,
+.modal {
   position: fixed;
   top: 50vh;
   right: 50vw;
+  transform: translate(50%, -50%);
   @apply bg-yellow-300 p-5 border-2 border-green-950 rounded;
 }
 

@@ -88,6 +88,8 @@ const sessionToken = ref(null);
 
 const appStates = reactive({
   isEditingOrder: false,
+  cancelConfirm: false,
+  rateOrder: false,
 });
 
 // MULTI LANGUAGE

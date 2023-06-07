@@ -12,7 +12,7 @@
     >
       <div
         @click="editOrder(order)"
-        v-if="!order.state.isEditing"
+        v-if="!order.state.isEditing && order.state.isShownOptions"
         class="edit-icon absolute right-[-0.5rem] top-[-0.5rem] z-50 cursor-pointer"
       >
         <img
@@ -32,7 +32,7 @@
           },
           'order',
         ]"
-        class="flex flex-col gap-[10px] p-1 my-1 bg-teal-100 min-h-[78px] h-[78px] border-2 border-green-800 rounded overflow-y-hidden"
+        class="flex flex-col gap-[10px] p-1 my-1 bg-teal-100 min-h-[78px] border-2 border-green-800 rounded overflow-y-hidden"
       >
         <div class="header flex">
           <div class="order-items-wrapper w-[190px]">
@@ -70,28 +70,71 @@
           </div>
           <div class="order-buttons" :class="order.status.toLowerCase()">
             <div
-              class="w-full flex items-center justify-center"
+              class="w-full flex items-center justify-center cursor-default"
               :class="['order-status']"
             >
               <p>{{ lang(order.status.toLowerCase()).value }}</p>
             </div>
             <div
-              class="w-full flex flex-col items-center justify-center text-xs cursor-pointer"
-              :class="['order-detail-btn', order.status.toLowerCase()]"
+              class="flex flex-col items-center justify-center w-full h-[28px] text-xs cursor-pointer mt-1 bg-gray-400 hover:bg-gray-300 rounded"
+              :class="['btn-order-options', order.status.toLowerCase()]"
             >
-              <p
+              <span
                 @click="
                   order.state.isShownOptions = !order.state.isShownOptions
                 "
               >
                 {{ lang('options').value }}
-              </p>
+              </span>
             </div>
           </div>
         </div>
         <div v-show="order.state.isShownOptions" class="option-btns flex">
-          <button class="w-full">Cancel order</button>
-          <button class="w-full">Rate order</button>
+          <button
+            v-if="order.status == 'Received'"
+            @click="appStates.cancelConfirm = true"
+            class="w-full"
+          >
+            Cancel order
+          </button>
+          <button v-if="order.status == 'Done'" class="w-full">
+            Rate order
+          </button>
+        </div>
+        <div :class="['rate-order']" class="modal" v-if="appStates.rateOrder">
+          <div class="flex flex-col items-center">
+            <h3 class="text-lg font-bold mb-2">Rate us</h3>
+            <div class="stars flex mb-2">
+              <div v-for="n in 5" class="star" :key="n">
+                <img
+                  width="32"
+                  height="32"
+                  src="https://img.icons8.com/ios/32/000000/star--v1.png"
+                  alt="star"
+                />
+              </div>
+            </div>
+            <div>
+              <textarea
+                class="w-full h-[100px] p-1 border-2 border-gray-400 rounded"
+                placeholder="Write your feedback here..."
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        <div v-if="appStates.cancelConfirm" class="cancel-confirm">
+          <p>{{ lang('orderCancelConfirm').value }}</p>
+          <button
+            @click="
+              cancelOrder();
+              appStates.cancelConfirm = false;
+            "
+          >
+            {{ lang('orderCancel').value }}
+          </button>
+          <button @click="appStates.cancelConfirm = false">
+            {{ lang('goBack').value }}
+          </button>
         </div>
       </div>
     </div>
@@ -169,6 +212,12 @@ const editOrder = (order) => {
 const reorder = (order) => {
   order = deepClone(order);
   allOrders.value.push(order);
+};
+
+const cancelOrder = (order) => {
+  const index = allOrders.value.findIndex((o) => o.id === order.id);
+  allOrders.value[index].status = 'Cancelled';
+  db.upsert.order(allOrders.value[index]);
 };
 </script>
 <style></style>

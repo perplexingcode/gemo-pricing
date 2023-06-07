@@ -349,20 +349,6 @@
                     : lang('order').value
                 }}
               </button>
-              <div v-if="UI.cancelConfirm" class="cancel-confirm">
-                <p>{{ lang('orderCancelConfirm').value }}</p>
-                <button
-                  @click="
-                    cancelOrder();
-                    UI.cancelConfirm = false;
-                  "
-                >
-                  {{ lang('orderCancel').value }}
-                </button>
-                <button @click="UI.cancelConfirm = false">
-                  {{ lang('goBack').value }}
-                </button>
-              </div>
             </div>
           </div>
           <Orders orders="indexOrders" />
@@ -902,34 +888,30 @@ provide('items', items);
 }
 
 .order-status {
-  padding: 1rem;
+  @apply border-2 border-black;
+  padding: 0.85rem;
   font-size: 0.9rem;
   height: 30px;
   width: 142px;
 }
 
 .received .order-status {
-  @apply bg-green-800 text-white rounded;
+  @apply bg-green-900  text-white;
 }
 .processing .order-status {
-  @apply bg-yellow-300 text-blue-600 rounded;
+  @apply bg-yellow-300 text-blue-600;
 }
 
 .done .order-status {
-  @apply bg-teal-500 text-white rounded;
+  @apply bg-teal-500 text-white;
 }
 
 .cancelled .order-status {
-  @apply bg-gray-500 text-white rounded;
-}
-
-.order-detail-btn {
-  height: 30px;
-  width: 1 30px;
+  @apply bg-gray-500 text-white;
 }
 
 .btn-cancel:hover {
-  @apply bg-red-500 text-white rounded;
+  @apply bg-red-500 text-white;
 }
 /* .btn-cancel {
   @apply bg-gray-500 text-white rounded;
