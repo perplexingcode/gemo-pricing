@@ -364,9 +364,9 @@
                 :disabled="session.table === '' || order.items.length === 0"
               >
                 {{
-                  order.isEditing
-                    ? lang('order').value
-                    : lang('saveChanges').value
+                  appStates.isEditing
+                    ? lang('saveChanges').value
+                    : lang('order').value
                 }}
               </button>
               <div v-if="UI.cancelConfirm" class="cancel-confirm">
@@ -691,21 +691,24 @@ const getTimestamp = function () {
 
 const placeOrder = function () {
   if (order.items.length === 0) return;
-  const isEdit = order.isEditing === true;
+  const isEdit = order.state.isEditing === true;
   console.log(isEdit);
   // update
   order.status = 'Received';
   order.timestamp = getTimestamp();
   order.date = new Date().toISOString().substring(0, 10);
   // push
-  db.upsert.order(deepClone(order));
+  const _order = deepClone(order);
+  delete _order.state;
+  db.upsert.order(_order);
+
+  // CASE: Save edit changes
   if (isEdit) {
     notifications.value.pushNoti(lang('orderUpdated'));
+    appStates.isEditingOrder = false;
     // remove old order
     const editedOrder = orders.value.find((o) => o.id === order.id);
     orders.value.splice(orders.value.indexOf(editedOrder), 1);
-    // remove state
-    delete order.isEditing;
   }
   orders.value.push(deepClone(order));
 
@@ -867,32 +870,22 @@ provide('indexOrders', sortedOrders);
 provide('items', items);
 </script>
 <style>
-.order {
-  @apply p-1 my-1 border-2 border-green-800 rounded bg-teal-100;
-  gap: 10px;
-  min-height: 72px;
-  height: 72px;
-  overflow-y: hidden;
-}
-
 .order.is-editing {
   @apply border-teal-300 border-[3px] bg-yellow-200;
 }
 
 .order-items {
-  display: grid;
   grid-template-columns: repeat(6, 30px);
-  width: 190px;
 }
 .order-items.big-icon {
   grid-template-columns: repeat(3, 64px);
 }
 
-.order.compact {
+.order.large {
   height: 75px;
 }
 
-.order.compact .order-status {
+.order.large .order-status {
   margin-top: 1px;
 }
 

@@ -8,8 +8,8 @@ export default {
     VN: 'Sữa hạnh nhân',
   },
   alreadyEditing: {
-    EN: 'You are already editing an order. Please complete or cancel that order before placing a new one.',
-    VN: 'Bạn đang chỉnh sửa một đơn hàng. Vui lòng hoàn thành hoặc hủy đơn hàng đó trước khi đặt đơn mới.',
+    EN: 'You are already editing an order. Please save changes or cancel that order before selecting a different one.',
+    VN: 'Bạn đang chỉnh sửa một đơn hàng. Vui lòng lưu thay đổi hoặc hủy đơn hàng đó trước khi chọn một đơn hàng khác.',
   },
   bagel: {
     EN: 'Bagel',
@@ -202,6 +202,10 @@ export default {
   sandwich: {
     EN: 'Sandwich',
     VN: 'Bánh mì kẹp',
+  },
+  saveChanges: {
+    EN: 'Save changes',
+    VN: 'Lưu thay đổi',
   },
   seeDetails: {
     EN: 'See details',

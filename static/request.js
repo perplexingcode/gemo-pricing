@@ -15,6 +15,5 @@ export async function request(path, method, data, header) {
   if (header) {
     config.headers = { ...config.headers, ...header };
   }
-  console.log(backendUrl + path, config);
   return await useFetch(backendUrl + path, config);
 }

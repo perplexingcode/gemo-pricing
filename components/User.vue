@@ -172,7 +172,6 @@ const doSignup = async function () {
       }
     );
 
-    console.log(response.data);
     sessionToken.value = response.data.access_token;
     // Use the access token from the response for API calls or other operations
   } catch (error) {

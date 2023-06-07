@@ -8,11 +8,11 @@
     <div
       v-for="order in orders"
       :key="order.id"
-      class="order-wrapper w-[344px] relative mb-3"
+      class="order-wrapper w-[348px] relative mb-3"
     >
       <div
         @click="editOrder(order)"
-        v-if="!order.isEditing"
+        v-if="!order.state.isEditing"
         class="edit-icon absolute right-[-0.5rem] top-[-0.5rem] z-50 cursor-pointer"
       >
         <img
@@ -25,17 +25,20 @@
         />
       </div>
       <div
-        class="order flex flex-col"
-        :class="{
-          compact: order.items.length > 12,
-          'is-editing': order.isEditing,
-        }"
+        :class="[
+          {
+            large: order.items.length > 12,
+            'is-editing': order.state.isEditing,
+          },
+          'order',
+        ]"
+        class="flex flex-col gap-[10px] p-1 my-1 bg-teal-100 min-h-[78px] h-[78px] border-2 border-green-800 rounded overflow-y-hidden"
       >
         <div class="header flex">
-          <div class="order-items-wrapper">
+          <div class="order-items-wrapper w-[190px]">
             <div
-              class="order-items flex flex-col"
-              :class="{ 'big-icon': order.items.length <= 3 }"
+              :class="['order-items', { 'big-icon': order.items.length <= 3 }]"
+              class="grid mr-2 border-2 border-teal-400 rounded"
             >
               <div
                 v-for="item in order.items"
@@ -110,7 +113,7 @@ const allOrders = inject('orders');
 const currentOrder = inject('order');
 const notifications = inject('notifications');
 
-const { isEditingOrder } = inject('appStates');
+const appStates = inject('appStates');
 
 const statusActions = {
   Received: 'editOrder',
@@ -138,25 +141,25 @@ const doOrderAction = (order) => {
 };
 
 const editOrder = (order) => {
-  if (isEditingOrder.value) {
+  if (appStates.isEditingOrder) {
     notifications.value.pushNoti({
       type: 'error',
       message: lang('alreadyEditing'),
     });
     return;
   }
-  isEditingOrder.value = true;
+  appStates.isEditingOrder = true;
   order = deepClone(order);
   currentOrder.items = order.items;
   currentOrder.status = order.status;
   currentOrder.id = order.id;
   currentOrder.status = 'Ordering';
-  currentOrder.isEditing = true;
+  currentOrder.state.isEditing = true;
   // set all isEditing to false
-  allOrders.value.forEach((o) => (o.isEditing = false));
+  allOrders.value.forEach((o) => (o.state.isEditing = false));
   // Find order in orders and set isEditing to true
   const index = allOrders.value.findIndex((o) => o.id === order.id);
-  allOrders.value[index].isEditing = true;
+  allOrders.value[index].state.isEditing = true;
 };
 
 const reorder = (order) => {

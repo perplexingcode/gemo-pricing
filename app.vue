@@ -19,10 +19,10 @@
         class="w-fit m-auto"
       >
         <div
-          v-if="noti.message"
+          v-if="noti?.message"
           class="p-2 mb-3 bg-yellow-300 rounded sm:w-80 w-90 m-auto border-2 border-green-900"
           :class="'noti-' + noti.type"
-          @click="notifications.splice(index, 1)"
+          @click="removeNotification(index)"
         >
           <p>
             {{ noti.message }}
@@ -32,18 +32,34 @@
     </div>
     <NuxtPage />
     <div v-if="development" class="development py-5 card">
-      <button @click="resetSession">Reset session</button>
-      <p class="py-1">{{ session.status }}</p>
-      <div class="flex">
-        <!-- <Json name="Log" :value="log" /> -->
-        <Json name="Session" :value="session" />
-        <Json name="User" :value="user" />
-        <Json name="Order" :value="order" />
-        <Json name="Orders" :value="orders" />
-        <Json name="Noti" :value="notifications" />
+      <div class="flex items-center">
+        <h1 class="text-lg font-bold">Development</h1>
+        <button @click="showDevelopment = !showDevelopment">
+          {{ showDevelopment ? '-' : '+' }}
+        </button>
       </div>
-      <input v-model="testVar" />
-      <!-- expanded -->
+      <div v-show="showDevelopment">
+        <div class="flex">
+          <button @click="resetSession">Reset session</button>
+          <button @click="notifications.pushNoti('wtf')">Add Noti</button>
+        </div>
+        <p class="py-1">{{ session.status }}</p>
+        <div class="flex">
+          <!-- <Json name="Log" :value="log" /> -->
+          <Json name="Session" :value="session" />
+          <Json name="User" :value="user" />
+          <Json name="Order" :value="order" />
+          <Json name="Orders" :value="orders" />
+          <Json name="Noti" :value="notifications" />
+          <Json
+            name="appStates
+        "
+            :value="appStates"
+          />
+        </div>
+        <input v-model="testVar" />
+        <!-- expanded -->
+      </div>
     </div>
   </div>
 </template>
@@ -63,6 +79,7 @@ import {
 
 //<< DEV
 const development = ref(false);
+const showDevelopment = ref(false);
 const log = ref('');
 const testVar = ref(0);
 // >>
@@ -105,7 +122,7 @@ const lang = function (key, counter) {
 
 // NOTIFICATIONS
 const notifications = ref([
-  // { message: 'ok', type: 'info' }
+  // { id: v4(), message: 'ok', type: 'info' }
 ]);
 // SESSION, USER, ORDERS
 const session = reactive({
@@ -133,6 +150,9 @@ const order = reactive({
   priceBeforeTax: 0,
   table: computed(() => session.table),
   customer: computed(() => session.customer),
+  state: {
+    isEditing: false,
+  },
 });
 
 const orders = ref([]);
@@ -228,7 +248,7 @@ Array.prototype.pushWithId = function (...items) {
   });
 };
 
-Array.prototype.pushNoti = function (noti) {
+Array.prototpushNoti = function (noti) {
   if (!noti) return;
   const notiWithId = {
     id: v4(),
@@ -240,13 +260,24 @@ Array.prototype.pushNoti = function (noti) {
 
 // FUNCTION DECLARATIONS
 
+const removeNotification = (index) => {
+  delete notifications.value[index];
+};
+
 // Get
 async function getCloudSession() {
   return (await getById('wunderbar_session', session.id)).data._rawValue;
 }
 
 async function getCloudOrders() {
-  return (await query('wunderbar_order', 'userId', session.id)).data._rawValue;
+  return (
+    await query('wunderbar_order', 'userId', session.id)
+  ).data._rawValue.map((order) => ({
+    ...order,
+    state: {
+      isEditing: false,
+    },
+  }));
 }
 
 async function getCloudUser(id) {
