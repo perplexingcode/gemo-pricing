@@ -215,8 +215,8 @@ export default {
     EN: 'Select item',
     VN: 'Chọn món',
   },
-  selectOptions: {
-    EN: 'Select option',
+  options: {
+    EN: 'Options',
     VN: 'Tùy chọn',
   },
   signup: {

@@ -80,14 +80,15 @@
               :class="['order-detail-btn', order.status.toLowerCase()]"
               @click="doOrderAction(order)"
             >
-              <p v-if="statusActions[order.status]">
-                {{ lang(statusActions[order.status]).value }}
+              <p @click="showOptions">
+                {{ lang('options').value }}
               </p>
             </div>
           </div>
         </div>
-        <div class="details">
-          <h1 class="text-xl bg-teal-500">Ai cha dan choi</h1>
+        <div class="option-btns flex">
+          <button class="w-full">Cancel order</button>
+          <button class="w-full">Rate order</button>
         </div>
       </div>
     </div>

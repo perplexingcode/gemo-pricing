@@ -152,6 +152,7 @@ const order = reactive({
   customer: computed(() => session.customer),
   state: {
     isEditing: false,
+    isShownOptions: false,
   },
 });
 
