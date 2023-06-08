@@ -344,7 +344,7 @@
                 :disabled="session.table === '' || order.items.length === 0"
               >
                 {{
-                  appStates.isEditingOrder
+                  APP.isEditingOrder
                     ? lang('saveChanges').value
                     : lang('order').value
                 }}
@@ -365,7 +365,6 @@ import { v4 } from 'uuid';
 import { deepClone } from '~/static/util';
 
 // INJECTS
-const development = inject('development');
 const sessionToken = inject('sessionToken');
 const lang = inject('lang');
 const session = inject('session');
@@ -374,7 +373,7 @@ const db = inject('db');
 const notifications = inject('notifications');
 const order = inject('order');
 const orders = inject('orders');
-const appStates = inject('appStates');
+const APP = inject('APP');
 
 // UI
 const UI = reactive({
@@ -667,10 +666,10 @@ const placeOrder = function () {
   db.upsert.order(_order);
 
   // CASE: Save edit changes
-  if (appStates.isEditingOrder) {
+  if (APP.isEditingOrder) {
     console.log(notifications.value);
     notifications.value.pushNoti(lang('orderUpdated'));
-    appStates.isEditingOrder = false;
+    APP.isEditingOrder = false;
     // remove old order
     const editedOrder = orders.value.find((o) => o.id === order.id);
     orders.value.splice(orders.value.indexOf(editedOrder), 1);

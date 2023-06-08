@@ -115,6 +115,10 @@ export default {
     EN: 'Login',
     VN: 'Đăng nhập',
   },
+  logout: {
+    EN: 'Logout',
+    VN: 'Đăng xuất',
+  },
   item: {
     EN: { singular: 'Item', plural: 'Items' },
     VN: 'Món',
@@ -130,6 +134,10 @@ export default {
   milkTea: {
     EN: 'Milk Tea',
     VN: 'Trà sữa',
+  },
+  myOrders: {
+    EN: 'My orders',
+    VN: 'Danh sách đơn',
   },
   name: {
     EN: 'Name',
@@ -215,6 +223,10 @@ export default {
     EN: 'Select item',
     VN: 'Chọn món',
   },
+  submit: {
+    EN: 'Submit',
+    VN: 'Gửi',
+  },
   options: {
     EN: 'Options',
     VN: 'Tùy chọn',
@@ -231,9 +243,21 @@ export default {
     EN: 'Spread',
     VN: 'Phết',
   },
+  rateOrder: {
+    EN: 'Rate order',
+    VN: 'Gửi đánh giá',
+  },
+  rateUs: {
+    EN: 'Rate us',
+    VN: 'Kết nối với chúng mình',
+  },
   reorder: {
     EN: 'Reorder',
-    VN: 'Đặt lại',
+    VN: 'Đặt lại đơn',
+  },
+  reorderSuccess: {
+    EN: 'Reorder successful',
+    VN: 'Đơn hàng mới đã được tiếp nhận',
   },
   table: {
     EN: 'Table',
@@ -266,6 +290,10 @@ export default {
   wholeMilk: {
     EN: 'Whole Milk',
     VN: 'Sữa tươi',
+  },
+  writeFeedback: {
+    EN: 'Write your feedback here',
+    VN: 'Hãy chia sẻ cảm nhận của bạn nhé',
   },
   yes: {
     EN: 'Yes',

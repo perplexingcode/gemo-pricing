@@ -9,6 +9,7 @@ export const upsert = async function (table, data) {
     'POST',
     JSON.stringify(data)
   );
+  console.log(response);
   return response;
 };
 

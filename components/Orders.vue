@@ -34,6 +34,7 @@
         ]"
         class="flex flex-col gap-[10px] p-1 my-1 bg-teal-100 min-h-[78px] border-2 border-green-800 rounded overflow-y-hidden"
       >
+        <Dev :value="order.id" />
         <div class="header flex">
           <div class="order-items-wrapper w-[190px]">
             <div
@@ -92,47 +93,84 @@
         <div v-show="order.state.isShownOptions" class="option-btns flex">
           <button
             v-if="order.status == 'Received'"
-            @click="appStates.cancelConfirm = true"
-            class="w-full"
+            @click="APP.cancelConfirm = true"
+            class="cancel w-full bg-gray-500 hover:bg-orange-500"
           >
-            Cancel order
+            {{ lang('orderCancel').value }}
           </button>
-          <button v-if="order.status == 'Done'" class="w-full">
-            Rate order
+          <button
+            v-if="order.status == 'Done'"
+            class="reorder w-full"
+            @click="reorder(order)"
+          >
+            {{ lang('reorder').value }}
+          </button>
+          <button
+            v-if="order.status == 'Done'"
+            class="rate-order w-full"
+            @click="APP.rateOrder = true"
+          >
+            {{ lang('rateOrder').value }}
           </button>
         </div>
-        <div :class="['rate-order']" class="modal" v-if="appStates.rateOrder">
+        <div :class="['rate-order']" class="modal" v-if="APP.rateOrder">
           <div class="flex flex-col items-center">
-            <h3 class="text-lg font-bold mb-2">Rate us</h3>
+            <h3 class="text-lg font-bold mb-2">{{ lang('rateUs').value }}</h3>
             <div class="stars flex mb-2">
               <div v-for="n in 5" class="star" :key="n">
                 <img
+                  v-show="review.star >= n"
+                  src="~/assets/img/icons8-star-32-fill.png"
+                  alt="star"
+                  @click="review.star = n"
+                />
+                <img
+                  v-show="review.star < n"
                   width="32"
                   height="32"
-                  src="https://img.icons8.com/ios/32/000000/star--v1.png"
+                  src="~/assets/img/icons8-star-32.png"
                   alt="star"
+                  @click="review.star = n"
                 />
               </div>
             </div>
             <div>
               <textarea
                 class="w-full h-[100px] p-1 border-2 border-gray-400 rounded"
-                placeholder="Write your feedback here..."
+                v-model="review.feedback"
+                :placeholder="lang('writeFeedback').value"
               ></textarea>
             </div>
+            <button @click="submitFeedback(order)">
+              {{ lang('submit').value }}
+            </button>
+          </div>
+          <div>
+            <img
+              width="24"
+              height="24"
+              src="https://img.icons8.com/material-two-tone/24/1D7CA4/cancel--v1.png"
+              alt="close"
+              class="close absolute top-[-1rem] right-[-1.5rem] cursor-pointer"
+              @click="APP.rateOrder = false"
+            />
           </div>
         </div>
-        <div v-if="appStates.cancelConfirm" class="cancel-confirm">
+        <div v-if="APP.cancelConfirm" class="cancel-confirm text-center">
           <p>{{ lang('orderCancelConfirm').value }}</p>
           <button
+            class="w-full bg-gray-500 hover:bg-orange-500"
             @click="
               cancelOrder();
-              appStates.cancelConfirm = false;
+              APP.cancelConfirm = false;
             "
           >
             {{ lang('orderCancel').value }}
           </button>
-          <button @click="appStates.cancelConfirm = false">
+          <button
+            class="w-full hover:bg-teal-700"
+            @click="APP.cancelConfirm = false"
+          >
             {{ lang('goBack').value }}
           </button>
         </div>
@@ -142,6 +180,9 @@
 </template>
 <script setup>
 import { deepClone } from '~/static/util';
+import { v4 } from 'uuid';
+
+const db = inject('db');
 
 const props = defineProps({
   orders: {
@@ -160,42 +201,22 @@ const allOrders = inject('orders');
 const currentOrder = inject('order');
 const notifications = inject('notifications');
 
-const appStates = inject('appStates');
+const APP = inject('APP');
 
-const statusActions = {
-  Received: 'editOrder',
-  Processing: '',
-  Done: 'reorder',
-  Cancelled: 'feedback',
-};
-
-const doOrderAction = (order) => {
-  switch (order.status) {
-    case 'Received':
-      editOrder(order);
-      break;
-    case 'Processing':
-      break;
-    case 'Done':
-      reorder(order);
-      break;
-    case 'Cancelled':
-      feedback();
-      break;
-    default:
-      break;
-  }
-};
+const review = reactive({
+  star: 0,
+  feedback: '',
+});
 
 const editOrder = (order) => {
-  if (appStates.isEditingOrder) {
+  if (APP.isEditingOrder) {
     notifications.value.pushNoti({
       type: 'error',
       message: lang('alreadyEditing'),
     });
     return;
   }
-  appStates.isEditingOrder = true;
+  APP.isEditingOrder = true;
   order = deepClone(order);
   currentOrder.items = order.items;
   currentOrder.status = order.status;
@@ -210,14 +231,30 @@ const editOrder = (order) => {
 };
 
 const reorder = (order) => {
-  order = deepClone(order);
+  const index = allOrders.value.findIndex((o) => o.id === order.id);
+  order = deepClone(allOrders.value[index]);
+  order.id = v4();
+  order.status = 'Received';
   allOrders.value.push(order);
+  db.upsert.order(order);
+  notifications.value.pushNoti({
+    type: 'success',
+    message: lang('reorderSuccess'),
+  });
 };
 
 const cancelOrder = (order) => {
   const index = allOrders.value.findIndex((o) => o.id === order.id);
   allOrders.value[index].status = 'Cancelled';
   db.upsert.order(allOrders.value[index]);
+};
+
+const submitFeedback = (order) => {
+  const index = allOrders.value.findIndex((o) => o.id === order.id);
+  allOrders.value[index].review = review;
+  db.upsert.order(allOrders.value[index]);
+  APP.rateOrder = false;
+  APP.testVar = orders.value[0];
 };
 </script>
 <style></style>

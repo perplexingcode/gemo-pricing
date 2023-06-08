@@ -1,3 +1,5 @@
+- treatment for 1 order only
+- why pushing order only work when cloning from allOrders?
 - smooth placeholder to label
 - smooth transition
 - bring notification to app.vue
