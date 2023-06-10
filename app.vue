@@ -31,14 +31,34 @@
       </div>
     </div>
     <NuxtPage />
-    <div v-if="development" class="development py-5 card">
+    <div v-if="APP.development" class="development py-5 card">
       <div class="flex items-center">
         <h1 class="text-lg font-bold">Development</h1>
-        <button @click="showDevelopment = !showDevelopment">
-          {{ showDevelopment ? '-' : '+' }}
+        <button @click="APP.isShownDevelopment = !APP.isShownDevelopment">
+          {{ APP.isShownDevelopment ? '-' : '+' }}
         </button>
       </div>
-      <div v-show="showDevelopment">
+      <div v-show="APP.isShownDevelopment">
+        <div class="change-order-status">
+          <div class="flex">
+            <select v-model="selectedOrder.id">
+              <option v-for="order in orders" :key="order.id">
+                {{ order.id }}
+              </option>
+            </select>
+            <select v-model="selectedOrder.status">
+              <option
+                v-for="status in ['Ordering', 'Received', 'Processing', 'Done']"
+                :key="status"
+              >
+                {{ status }}
+              </option>
+            </select>
+            <button @click="changeOrderStatus">
+              {{ selectedOrder.status || '<- Select action' }}
+            </button>
+          </div>
+        </div>
         <div class="flex">
           <button @click="resetSession">Reset session</button>
           <button @click="notifications.pushNoti('wtf')">Add Noti</button>
@@ -52,12 +72,21 @@
           <Json name="Orders" :value="orders" />
           <Json name="Noti" :value="notifications" />
           <Json
-            name="appStates
+            name="APP
         "
-            :value="appStates"
+            :value="APP"
           />
         </div>
-        <input v-model="testVar" />
+        <div class="flex flex-col">
+          <textarea
+            class="min-h-[100px] min-w-[250px]"
+            v-model="APP.log"
+            placeholder="Log"
+            style="resize: both"
+          />
+          <Json title="Watch" :value="APP.testVar" />
+        </div>
+
         <!-- expanded -->
       </div>
     </div>
@@ -76,20 +105,22 @@ import {
   upsert,
   query,
 } from '~/static/db.js';
-
-//<< DEV
-const development = ref(false);
-const showDevelopment = ref(true);
-const log = ref('');
-const testVar = ref(0);
-// >>
+import { deepClone } from './static/util';
 
 const sessionToken = ref(null);
 
-const appStates = reactive({
+const APP = reactive({
+  //<< DEV
+  development: false,
+  isShownDevelopment: false,
+  log: '',
+  testVar: null,
+  // >>
+  isLoggedIn: true,
   isEditingOrder: false,
   cancelConfirm: false,
   rateOrder: false,
+  isShownLoginBox: false,
 });
 
 // MULTI LANGUAGE
@@ -180,16 +211,18 @@ const db = {
 onMounted(async () => {
   nextTick(async () => {
     //dev mode
-    if (window.location.search === '?dev') development.value = true;
+    if (window.location.search === '?dev') APP.development = true;
 
     // get sessionToken from cookie
     sessionToken.value = Cookies.get('sessionToken') || null;
 
+    // All orders
+    orders.value = await getCloudOrders();
+
     // fetch session data from server
     // if (!sessionToken.value) return; // DEV
     const cloudSession = await db.get.session();
-    // console.log(cloudSession);
-    if (!cloudSession.id) {
+    if (!cloudSession) {
       session.id = v4();
       session.status = 'Ordering';
       session.language = 'EN';
@@ -200,9 +233,6 @@ onMounted(async () => {
     session.item = cloudSession.item;
     session.customer = cloudSession.customer;
     session.table = cloudSession.table;
-
-    // All orders
-    orders.value = await getCloudOrders();
   });
 });
 
@@ -228,7 +258,6 @@ setInterval(function () {
 }, 2000);
 
 // PROVIDES
-provide('development', development);
 provide('lang', lang);
 provide('sessionToken', sessionToken);
 provide('notifications', notifications);
@@ -238,7 +267,7 @@ provide('order', order);
 provide('orders', orders);
 provide('sortOrder', sortOrder);
 provide('db', db);
-provide('appStates', appStates);
+provide('APP', APP);
 
 //
 Array.prototype.pushWithId = function (...items) {
@@ -269,7 +298,9 @@ const removeNotification = (index) => {
 
 // Get
 async function getCloudSession() {
-  return (await getById('wunderbar_session', session.id)).data._rawValue;
+  // return (await getById('wunderbar_session', session.id)).data._rawValue;
+  // TODO:
+  return null;
 }
 
 async function getCloudOrders() {
@@ -333,5 +364,20 @@ const resetSession = () => {
   db.upsert.session();
   db.upsert.user();
   db.upsert.order();
+};
+
+// Force order status
+const selectedOrder = reactive({
+  id: null,
+  status: null,
+});
+const changeOrderStatus = async () => {
+  const index = orders.value.findIndex(
+    (order) => order.id === selectedOrder.id
+  );
+  let order = orders.value[index];
+  order.status = selectedOrder.status;
+  await upsertCloudOrder(order);
+  APP.testVar = order;
 };
 </script>

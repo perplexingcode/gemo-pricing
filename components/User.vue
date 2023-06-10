@@ -2,7 +2,7 @@
   <div>
     <div class="user">
       <div
-        @click="isShownLoginPanel = !isShownLoginPanel"
+        @click="APP.isShownLoginBox = !APP.isShownLoginBox"
         class="icon-login cursor-pointer z-50"
         :title="lang('login').value"
       >
@@ -10,7 +10,7 @@
       </div>
     </div>
     <Transition :appear="true" name="fade">
-      <div v-show="isShownLoginPanel && !sessionToken" class="login-panel">
+      <div v-show="APP.isShownLoginBox && !APP.isLoggedIn" class="login-box">
         <h3 class="font-bold ml-[-0.5rem] mt-[-0.25rem]">Login</h3>
         <div class="input-group mb-2">
           <label>{{ lang('username').value }}</label>
@@ -40,53 +40,47 @@
         <button @click="doSignup">{{ lang('signup').value }}</button>
       </div>
     </Transition>
-    <Transition>
-      <div
-        v-show="isShownLoginPanel && sessionToken && !isShownProfile"
-        class="login-panel flex flex-col z-50"
+    <div
+      v-show="APP.isLoggedIn && page == 'menu'"
+      class="app-menu flex flex-col z-50"
+    >
+      <button
+        @click="
+          page = 'orders';
+          APP.isShownLoginBox = false;
+        "
       >
-        <button
-          @click="
-            isShownProfile = true;
-            isShownLoginPanel = false;
-          "
-        >
-          My profile
-        </button>
-        <button @click="sessionToken = null">Logout</button>
-      </div>
-    </Transition>
-    <Transition>
-      <div
-        v-show="isShownProfile"
-        class="profile-panel flex flex-col card border-teal-300 rounded m-2 p-2 border-[3px] z-10"
-      >
-        <div class="header flex items-center justify-between gap-5">
-          <div>
-            <img
-              @click="
-                isShownProfile = false;
-                isShownLoginPanel = true;
-              "
-              width="32"
-              class="go-back cursor-pointer"
-              src="~/assets/img/arrow-left.png"
-            />
-          </div>
-          <h3 class="font-bold">My profile</h3>
+        {{ lang('myOrders').value }}
+      </button>
+      <button @click="APP.isLoggedIn = false">
+        {{ lang('logout').value }}
+      </button>
+    </div>
+    <div
+      v-show="page == 'orders'"
+      class="my-orders relative flex flex-col card border-teal-300 rounded m-2 p-2 border-[3px] z-10"
+    >
+      <div class="header absolute flex items-center justify-between gap-5">
+        <div class="btn go-back">
+          <img
+            @click="page = 'menu'"
+            width="32"
+            class="cursor-pointer"
+            src="~/assets/img/arrow-left.png"
+          />
         </div>
-        <div class="content">
-          <div class="orders">
-            <div class="header">
-              <h4 class="font-bold">{{ lang('yourOrders').value }}</h4>
-            </div>
-            <div class="content">
-              <Orders orders="userOrders" />
-            </div>
+      </div>
+      <div class="content">
+        <div class="orders">
+          <div class="header">
+            <h4 class="font-bold">{{ lang('yourOrders').value }}</h4>
+          </div>
+          <div class="content">
+            <Orders orders="userOrders" />
           </div>
         </div>
       </div>
-    </Transition>
+    </div>
   </div>
 </template>
 <script setup>
@@ -124,9 +118,12 @@ const username = ref('buisondong20@gmail.com');
 const password = ref('Token@00');
 const passwordConfirm = ref('Token@00');
 
-const isShownLoginPanel = ref(false);
+const APP = inject('APP');
+
 const isSignup = ref(false);
-const isShownProfile = ref(false);
+const page = ref('menu'); // menu, orders, profile
+
+APP.testVar = page;
 
 const doLogin = async function () {
   if (isSignup.value) {
