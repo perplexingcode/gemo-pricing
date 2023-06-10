@@ -851,8 +851,8 @@ provide('items', items);
   grid-template-columns: repeat(3, 60px);
 }
 
-.order-items {
-  height: 64px;
+.order:hover .order-items {
+  @apply bg-blue-50;
 }
 
 .large .order-items {
@@ -874,6 +874,7 @@ provide('items', items);
 .order-items-wrapper {
   position: relative;
 }
+
 .items-more {
   @apply border-2 p-1 text-white bg-teal-800 rounded text-xs;
   position: absolute;
@@ -885,6 +886,10 @@ provide('items', items);
 }
 .order:hover .items-more {
   display: none;
+}
+
+.order:hover .btn.order-options {
+  @apply bg-gray-200;
 }
 
 .order-status {

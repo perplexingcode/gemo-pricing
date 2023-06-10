@@ -32,18 +32,18 @@
           },
           'order',
         ]"
-        class="flex flex-col gap-[10px] p-1 my-1 bg-teal-100 min-h-[78px] border-2 border-green-800 rounded overflow-y-hidden"
+        class="flex flex-col gap-[10px] p-1 my-1 bg-teal-50 hover:bg-teal-300 min-h-[78px] border-2 border-green-800 rounded overflow-y-hidden"
       >
         <div class="header flex">
           <div class="order-items-wrapper w-[190px]">
             <div
               :class="['order-items', { 'big-icon': order.items.length <= 3 }]"
-              class="grid mr-2 border-2 border-teal-400 rounded"
+              class="grid h-[64px] mr-2 border-2 border-teal-400 rounded"
             >
               <div
                 v-for="item in order.items"
                 :key="item.id"
-                class="flex order-item"
+                class="flex order-item cursor-pointer"
                 :data-tooltip="item.description"
               >
                 <div class="img-wrapper">
@@ -76,8 +76,8 @@
               <p>{{ lang(order.status.toLowerCase()).value }}</p>
             </div>
             <div
-              class="flex flex-col items-center justify-center w-full h-[28px] text-xs cursor-pointer mt-1 bg-gray-400 hover:bg-gray-300 rounded"
-              :class="['btn-order-options', order.status.toLowerCase()]"
+              class="flex flex-col items-center justify-center w-full h-[28px] text-xs cursor-pointer mt-1 bg-gray-300 hover:bg-gray-300 rounded"
+              :class="['btn', 'order-options', order.status.toLowerCase()]"
             >
               <span
                 @click="
@@ -123,13 +123,9 @@
           </div>
         </div>
         <div v-if="appStates.cancelConfirm" class="cancel-confirm">
+          <p>{{ order.id }}</p>
           <p>{{ lang('orderCancelConfirm').value }}</p>
-          <button
-            @click="
-              cancelOrder();
-              appStates.cancelConfirm = false;
-            "
-          >
+          <button @click="cancelOrder(order)">
             {{ lang('orderCancel').value }}
           </button>
           <button @click="appStates.cancelConfirm = false">
@@ -159,6 +155,7 @@ const orders = inject(props.orders);
 const allOrders = inject('orders');
 const currentOrder = inject('order');
 const notifications = inject('notifications');
+const db = inject('db');
 
 const appStates = inject('appStates');
 
@@ -216,8 +213,14 @@ const reorder = (order) => {
 
 const cancelOrder = (order) => {
   const index = allOrders.value.findIndex((o) => o.id === order.id);
+  console.log(index);
   allOrders.value[index].status = 'Cancelled';
   db.upsert.order(allOrders.value[index]);
+  appStates.cancelConfirm = false;
+  notifications.value.pushNoti({
+    type: 'success',
+    message: lang('orderCancelled'),
+  });
 };
 </script>
 <style></style>
