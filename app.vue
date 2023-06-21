@@ -1,5 +1,6 @@
 <template>
   <div>
+    <FbAuth />
     <div
       class="language p-3 cursor-pointer w-fit fixed sm:z-20"
       @click="toggleLanguage"
@@ -61,7 +62,6 @@
         </div>
         <div class="flex">
           <button @click="resetSession">Reset session</button>
-          <button @click="notifications.pushNoti('wtf')">Add Noti</button>
         </div>
         <p class="py-1">{{ session.status }}</p>
         <div class="flex">
@@ -70,7 +70,6 @@
           <Json name="User" :value="user" />
           <Json name="Order" :value="order" />
           <Json name="Orders" :value="orders" />
-          <Json name="Noti" :value="notifications" />
           <Json
             name="APP
         "
@@ -78,13 +77,15 @@
           />
         </div>
         <div class="flex flex-col">
+          <input v-model="APP.testVar" />
           <textarea
             class="min-h-[100px] min-w-[250px]"
             v-model="APP.log"
             placeholder="Log"
             style="resize: both"
           />
-          <Json title="Watch" :value="APP.testVar" />
+          <Json name="Watch" :value="APP.testVar" />
+          <Json name="Auth" :value="AUTH" />
         </div>
 
         <!-- expanded -->
@@ -107,7 +108,32 @@ import {
 } from '~/static/db.js';
 import { deepClone } from './static/util';
 
-const sessionToken = ref(null);
+useHead({
+  title: 'Wunderbar - Taste of the ocean',
+  // or, instead:
+  // titleTemplate: (title) => `My App - ${title}`,
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  charset: 'utf-8',
+  meta: [
+    { name: 'Wunderbar', content: 'Cocktails, wines, boba & delicous foods.' },
+  ],
+  // bodyAttrs: {
+  //   class: 'test',
+  // },
+  script: [
+    // {
+    //   async: true,
+    //   src: '~/static/facebook_auth.js',
+    // },
+    // {
+    //   async: true,
+    //   defer: true,
+    //   crossorigin: 'anonymous',
+    //   nonce: 'XDlzejo0',
+    //   src: 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v17.0&appId=262473663130930&autoLogAppEvents=1',
+    // },
+  ],
+});
 
 const APP = reactive({
   //<< DEV
@@ -116,7 +142,6 @@ const APP = reactive({
   log: '',
   testVar: null,
   // >>
-  isLoggedIn: true,
   isEditingOrder: false,
   cancelConfirm: false,
   rateOrder: false,
@@ -157,26 +182,42 @@ const lang = function (key, counter) {
 const notifications = ref([
   // { id: v4(), message: 'ok', type: 'info' }
 ]);
+
+// TODO:
+
+const guestUserId = generateSessionId();
+
 // SESSION, USER, ORDERS
 const session = reactive({
-  id: 'danchoiasia',
+  id: guestUserId,
   language: 'EN',
   customer: null,
   table: null,
   item: { type: '' },
+  token: null,
+  loginType: null,
 });
 
 const user = reactive({
-  id: null,
+  id: guestUserId,
   name: null,
   email: null,
   avatar: null,
   orders: {},
 });
 
+// Change user
+watch(
+  () => user.id,
+  async () => {
+    session.id = user.id;
+    order.userId = user.id;
+    orders.value = await db.get.orders();
+  }
+);
 const order = reactive({
   id: v4(),
-  userId: 'danchoiasia',
+  userId: user.id,
   status: 'Ordering',
   items: [],
   price: 0,
@@ -190,6 +231,32 @@ const order = reactive({
 });
 
 const orders = ref([]);
+
+const AUTH = reactive({
+  app: null,
+  data: null,
+  type: null,
+  isLoggedIn: false,
+  login: null,
+  logout: () => {
+    AUTH.isLoggedIn = false;
+    user.id = v4();
+    session.customer = null;
+    // reset cookkie
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = cookies[i];
+      var eqPos = cookie.indexOf('=');
+      var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+      document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+    }
+  },
+  reset: () => {
+    for (const key in this) {
+      if (key !== 'reset') this[key] = null;
+    }
+  },
+});
 
 // DATABASE
 const db = {
@@ -209,31 +276,28 @@ const db = {
 
 // SYNC WITH CLOUD
 onMounted(async () => {
-  nextTick(async () => {
-    //dev mode
-    if (window.location.search === '?dev') APP.development = true;
+  await nextTick();
+  //dev mode
+  if (window.location.search === '?dev') APP.development = true;
 
-    // get sessionToken from cookie
-    sessionToken.value = Cookies.get('sessionToken') || null;
+  // get sessionToken from cookie
+  session.token = Cookies.get('sessionToken') || null;
 
-    // All orders
-    orders.value = await getCloudOrders();
+  // All orders
+  orders.value = await getCloudOrders();
 
-    // fetch session data from server
-    // if (!sessionToken.value) return; // DEV
-    const cloudSession = await db.get.session();
-    if (!cloudSession) {
-      session.id = v4();
-      session.status = 'Ordering';
-      session.language = 'EN';
-      return;
-    }
-    session.id = cloudSession.id;
-    session.language = cloudSession.language;
-    session.item = cloudSession.item;
-    session.customer = cloudSession.customer;
-    session.table = cloudSession.table;
-  });
+  // fetch session data from server
+  // if (!session.token) return; // DEV
+  const cloudSession = await db.get.session();
+  if (!cloudSession) {
+    session.status = 'Ordering';
+    session.language = 'EN';
+    return;
+  }
+  session.language = cloudSession.language;
+  session.item = cloudSession.item;
+  session.customer = cloudSession.customer;
+  session.table = cloudSession.table;
 });
 
 const sortOrder = {
@@ -243,23 +307,51 @@ const sortOrder = {
   Done: 3,
   Cancelled: 4,
 };
-
-setInterval(function () {
-  // if (!sessionToken.value) {
-  //   return;
-  // }
-  // if (testVar.value < 10) {
-  //   db.get.orderStatus();
-  //   db.get.orders();
-  //   if (development.value) {
-  //     testVar.value++;
-  //   }
-  // }
+setInterval(async function () {
+  if (!AUTH.isLoggedIn) {
+    return;
+  }
+  if (APP.testVar < 2 && orders.value.length > 0) {
+    await nextTick();
+    for (let index in orders.value) {
+      const order = orders.value[index];
+      if (!order?.id) continue;
+      if (order.status == 'Cancelled') continue;
+      APP.log += order.id + ' ' + order.status + ' --> ';
+      const status = await db.get.orderStatus(order.id);
+      console.log(order?.id, status);
+      APP.log +=
+        status +
+        `
+      `;
+      if (status == order.status) continue;
+      orders.value[index].status = status;
+      switch (status) {
+        case 'Received':
+          notifications.value.pushNoti(lang('orderReceived'));
+          break;
+        case 'Done':
+          notifications.value.push({
+            message: lang('orderDone'),
+            type: 'success',
+          });
+          break;
+        case 'Cancelled':
+          notifications.value.push({
+            message: lang('orderCancelled'),
+            type: 'error',
+          });
+          break;
+      }
+    }
+    if (APP.development) {
+      APP.testVar++;
+    }
+  }
 }, 2000);
 
 // PROVIDES
 provide('lang', lang);
-provide('sessionToken', sessionToken);
 provide('notifications', notifications);
 provide('session', session);
 provide('user', user);
@@ -268,6 +360,7 @@ provide('orders', orders);
 provide('sortOrder', sortOrder);
 provide('db', db);
 provide('APP', APP);
+provide('AUTH', AUTH);
 
 //
 Array.prototype.pushWithId = function (...items) {
@@ -284,13 +377,17 @@ Array.prototype.pushNoti = function (noti) {
   if (!noti) return;
   const notiWithId = {
     id: v4(),
-    message: noti.message || noti,
-    type: noti.type || 'info',
+    message: noti?.message || noti,
+    type: noti?.type || 'info',
   };
   Array.prototype.push.call(this, notiWithId);
 };
 
 // FUNCTION DECLARATIONS
+
+function generateSessionId() {
+  return v4();
+}
 
 const removeNotification = (index) => {
   delete notifications.value[index];
@@ -304,15 +401,15 @@ async function getCloudSession() {
 }
 
 async function getCloudOrders() {
-  return (
-    await query('wunderbar_order', 'userId', session.id)
-  ).data._rawValue.map((order) => ({
-    ...order,
-    state: {
-      isEditing: false,
-      isShownOptions: false,
-    },
-  }));
+  return (await query('wunderbar_order', 'userId', user.id)).data._rawValue.map(
+    (order) => ({
+      ...order,
+      state: {
+        isEditing: false,
+        isShownOptions: false,
+      },
+    })
+  );
 }
 
 async function getCloudUser(id) {
@@ -324,20 +421,8 @@ async function getCloudOrder(id) {
 }
 
 async function getCloudOrderStatus(id) {
-  const orderStatus = await getByIdProjection(
-    'wunderbar_order_status',
-    id || session.order.id,
-    'status'
-  );
-
-  if (orderStatus === 'Processing' && session.status !== 'Processing') {
-    notifications.value.pushNoti(lang('orderProcessing'));
-    session.status = 'Processing';
-  }
-  if (orderStatus === 'Done' && session.status !== 'Done') {
-    notifications.value.pushNoti(lang('orderCompleted'));
-    session.status = 'Done';
-  }
+  const orderStatus = await getByIdProjection('wunderbar_order', id, 'status');
+  return orderStatus.data._rawValue.status;
 }
 
 // Upsert

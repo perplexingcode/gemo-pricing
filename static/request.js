@@ -1,5 +1,5 @@
 import Cookies from 'js-cookie';
-export async function request(path, method, data, header) {
+export async function request(path, method, data, header, attr) {
   const { backendUrl } = useRuntimeConfig().public;
   const sessionToken = Cookies.get('sessionToken') || null;
   let config = {
@@ -7,13 +7,15 @@ export async function request(path, method, data, header) {
     body: data,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      Authorization: 'Bearer ' + sessionToken?.value,
+      Authorization: 'Bearer ' + attr?.token || sessionToken?.value,
     },
     data: data,
   };
   if (header) {
     config.headers = { ...config.headers, ...header };
   }
-  return await useFetch(backendUrl + path, config);
+  if (method === 'GET') delete config.body;
+  if (attr?.noCors) config.mode = 'no-cors';
+  if (!path.includes('http')) path = backendUrl + path;
+  return await useFetch(path, config);
 }

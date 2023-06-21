@@ -28,6 +28,13 @@ export default defineNuxtConfig({
     public: {
       rootDir: process.env.ROOT_DIR,
       backendUrl: process.env.BACKEND_URL,
+      auth0Url: process.env.AUTH0_URL,
+      auth0ClientId: process.env.AUTH0_CLIENT_ID,
+      auth0ClientSecret: process.env.AUTH0_CLIENT_SECRET,
+      auth0Audience: process.env.AUTH0_AUDIENCE,
+      auth0ManagementClientId: process.env.AUTH0_MANAGEMENT_CLIENT_ID,
+      auth0ManagementClientSecret: process.env.AUTH0_MANAGEMENT_CLIENT_SECRET,
+      auth0ManagementAudience: process.env.AUTH0_MANAGEMENT_AUDIENCE,
     },
   },
 });

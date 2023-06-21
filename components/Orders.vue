@@ -182,8 +182,6 @@
 import { deepClone } from '~/static/util';
 import { v4 } from 'uuid';
 
-const db = inject('db');
-
 const props = defineProps({
   orders: {
     type: String,
@@ -246,7 +244,7 @@ const reorder = (order) => {
 
 const cancelOrder = (order) => {
   const index = allOrders.value.findIndex((o) => o.id === order.id);
-  console.log(index);
+ 
   allOrders.value[index].status = 'Cancelled';
   db.upsert.order(allOrders.value[index]);
 };
@@ -256,7 +254,6 @@ const submitFeedback = (order) => {
   allOrders.value[index].review = review;
   db.upsert.order(allOrders.value[index]);
   APP.rateOrder = false;
-  APP.testVar = orders.value[0];
 };
 </script>
 <style></style>

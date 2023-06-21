@@ -365,7 +365,6 @@ import { v4 } from 'uuid';
 import { deepClone } from '~/static/util';
 
 // INJECTS
-const sessionToken = inject('sessionToken');
 const lang = inject('lang');
 const session = inject('session');
 const user = inject('user');

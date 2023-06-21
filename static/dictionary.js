@@ -147,6 +147,10 @@ export default {
     EN: 'No',
     VN: 'Không',
   },
+  or: {
+    EN: 'or',
+    VN: 'hoặc',
+  },
   order: {
     EN: 'Order',
     VN: 'Đặt đơn',
@@ -191,6 +195,10 @@ export default {
     EN: 'Order updated',
     VN: 'Đơn đã được cập nhật',
   },
+  orLoginWith: {
+    EN: 'Or login with',
+    VN: 'Hoặc đăng nhập với',
+  },
   password: {
     EN: 'Password',
     VN: 'Mật khẩu',
@@ -198,6 +206,14 @@ export default {
   passwordConfirm: {
     EN: 'Confirm password',
     VN: 'Xác nhận mật khẩu',
+  },
+  passwordMismatch: {
+    EN: 'Passwords do not match',
+    VN: 'Mật khẩu không khớp',
+  },
+  passwordWrong: {
+    EN: 'Wrong username or password.',
+    VN: 'Thông tin đăng nhập không chính xác.',
   },
   processing: {
     EN: 'Processing',
@@ -290,6 +306,10 @@ export default {
   wholeMilk: {
     EN: 'Whole Milk',
     VN: 'Sữa tươi',
+  },
+  with: {
+    EN: 'with',
+    VN: 'với',
   },
   writeFeedback: {
     EN: 'Write your feedback here',
