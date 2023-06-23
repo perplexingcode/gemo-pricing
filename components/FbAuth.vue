@@ -15,6 +15,7 @@
 </template>
 
 <script setup>
+import { upsert } from '~/static/db';
 import { deepClone } from '~/static/util';
 
 // Inject
@@ -59,6 +60,7 @@ onMounted(async () => {
                 if (!user.name) user.name = response.name;
                 session.customer = response.name;
                 user.id = response.id;
+                upsert('wunderbar_user', user);
               });
             } else if (response.status === 'unknown') {
               document.getElementById('status').innerHTML =

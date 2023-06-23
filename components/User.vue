@@ -2,14 +2,44 @@
   <div>
     <div class="user">
       <div
-        @click="
-          APP.isShownLoginBox = !APP.isShownLoginBox;
-          APP.isShownMenu = !APP.isShownMenu;
-        "
-        class="icon-login cursor-pointer z-50"
+        class="icon-login cursor-pointer z-50 relative"
         :title="lang('login').value"
       >
-        <img src="~/assets/img/profile-64.png" />
+        <img
+          @click="
+            APP.isShownLoginBox = !APP.isShownLoginBox;
+            APP.isShownMenu = !APP.isShownMenu;
+          "
+          class="w-[48px]"
+          src="~/assets/img/profile-64.png"
+        />
+        <div
+          class="absolute bottom-[-75px] left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+        >
+          <button
+            v-if="AUTH.isLoggedIn"
+            @click="AUTH.isLoggedIn = false"
+            class="text-sm"
+          >
+            {{ lang('logout').value }}
+          </button>
+          <button
+            v-if="!AUTH.isLoggedIn && !APP.isShownLoginBox"
+            @click="APP.isShownLoginBox = true"
+            class="text-sm"
+          >
+            {{ lang('login').value }}
+          </button>
+          <img
+            v-if="AUTH.isLoggedIn"
+            @click="
+              APP.isShownLoginBox = !APP.isShownLoginBox;
+              APP.isShownMenu = !APP.isShownMenu;
+            "
+            class="w-[36px] absolute top-[-23px] left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+            src="https://img.icons8.com/external-flat-icons-inmotus-design/67/external-beach-bocals-flat-icons-inmotus-design.png"
+          />
+        </div>
       </div>
     </div>
     <Login />
@@ -26,12 +56,9 @@
       >
         {{ lang('myOrders').value }}
       </button>
-      <button @click="AUTH.isLoggedIn = false">
-        {{ lang('logout').value }}
-      </button>
     </div>
     <div
-      v-show="page == 'orders'"
+      v-show="page == 'orders' && AUTH.isLoggedIn"
       class="my-orders relative flex flex-col card border-teal-300 rounded m-2 p-2 border-[3px] z-10"
     >
       <div class="header absolute flex items-center justify-between gap-5">
@@ -48,6 +75,14 @@
         </div>
       </div>
       <div class="content">
+        <div
+          v-if="!orders.length"
+          class="no-order w-[372px] pt-[2.75rem] p-3 text-center"
+        >
+          <p>
+            {{ lang('noOrder').value }}
+          </p>
+        </div>
         <Orders orders="userOrders" :title="lang('yourOrders').value" />
       </div>
     </div>

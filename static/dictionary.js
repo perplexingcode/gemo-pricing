@@ -71,6 +71,10 @@ export default {
     EN: 'Edit order',
     VN: 'Chỉnh sửa đơn hàng',
   },
+  editingOrder: {
+    EN: 'Editing order',
+    VN: 'Đổi món',
+  },
   egg: {
     EN: 'Egg',
     VN: 'Trứng',
@@ -86,6 +90,26 @@ export default {
   feedback: {
     EN: 'Feedback',
     VN: 'Góp ý',
+  },
+  feedback1: {
+    EN: `We're really sorry for any inconvenience you may have experienced. Your feedback is very important for us to improve our service.`,
+    VN: 'Chúng tôi rất tiếc vì bất kỳ sự bất tiện nào bạn có thể gặp phải. Phản hồi của bạn rất quan trọng đối với chúng tôi để cải thiện dịch vụ của chúng tôi.',
+  },
+  feedback2: {
+    EN: `We're really sorry for any inconvenience you may have experienced. Your feedback is very important for us to improve our service.`,
+    VN: 'Chúng tôi rất tiếc vì bất kỳ sự bất tiện nào bạn có thể gặp phải. Phản hồi của bạn rất quan trọng đối với chúng tôi để cải thiện dịch vụ của chúng tôi.',
+  },
+  feedback3: {
+    EN: `Thanks for your feedback! We'll try our best to improve our service.`,
+    VN: 'Cảm ơn phản hồi của bạn! Chúng tôi sẽ cố gắng hết sức để cải thiện dịch vụ của chúng tôi.',
+  },
+  feedback4: {
+    EN: `We're greatful that you enjoyed our service. We'll try our best to keep it up.`,
+    VN: 'Chúng tôi rất vui mừng khi bạn thích dịch vụ của chúng tôi. Đội ngũ chúng tôi sẽ cố gắng hết mìnhd để nâng cao chất lượng dịch vụ.',
+  },
+  feedback5: {
+    EN: `We're glad that you enjoyed our service. We'll try our best to keep it up :P`,
+    VN: 'Chúng tôi rất vui mừng khi bạn thích dịch vụ của chúng tôi. Đội ngũ chúng tôi sẽ cố gắng hết mình để nâng cao chất lượng dịch vụ :P',
   },
   filling: {
     EN: 'Filling',
@@ -114,6 +138,10 @@ export default {
   login: {
     EN: 'Login',
     VN: 'Đăng nhập',
+  },
+  loginRequired: {
+    EN: 'You need to login to place an order.',
+    VN: 'Bạn cần đăng nhập để đặt đơn hàng.',
   },
   logout: {
     EN: 'Logout',
@@ -147,6 +175,10 @@ export default {
     EN: 'No',
     VN: 'Không',
   },
+  noOrder: {
+    EN: "Looks like you you haven't made any orders yet. How about a nice iced drink? :P",
+    VN: 'Bạn chưa có đơn hàng nào. Thử một ly đồ uống mát lạnh nhé! :P',
+  },
   or: {
     EN: 'or',
     VN: 'hoặc',
@@ -170,6 +202,10 @@ export default {
   orderCompleted: {
     EN: 'Order completed. Please come to the counter to pick up your order.',
     VN: 'Món ăn đã sẵn sàng. Vui lòng tới quầy để nhận món.',
+  },
+  orderDetails: {
+    EN: 'Order details',
+    VN: 'Chi tiết đơn hàng',
   },
   orderDoneTitle: {
     EN: 'Order completed.',
@@ -302,6 +338,10 @@ export default {
   username: {
     EN: 'Username',
     VN: 'Tên đăng nhập',
+  },
+  welcomeBack: {
+    EN: 'Welcome back',
+    VN: 'Chào mừng trở lại',
   },
   wholeMilk: {
     EN: 'Whole Milk',

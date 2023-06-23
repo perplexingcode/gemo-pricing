@@ -86,7 +86,7 @@ const passwordConfirm = ref('Token@00');
 
 onMounted(() => {
   nextTick(() => {
-    // login(username.value, password.value);
+    doLoginEmail(username.value, password.value);
   });
 });
 
@@ -100,7 +100,11 @@ const doSubmit = function () {
 
 const doLogin = async function (method) {
   if (username.value === '' || password.value === '') return;
-  isSignup.value = false;
+
+  if (isSignup.value) {
+    isSignup.value = false;
+    return;
+  }
   switch (method) {
     case 'facebook':
       return doLoginFacebook();
@@ -110,9 +114,6 @@ const doLogin = async function (method) {
 };
 const doLoginFacebook = async function () {
   const isLoginSuccess = AUTH.loginFb();
-  if (!isLoginSuccess) {
-    state.wrongPassword = true;
-  }
 };
 const doLoginEmail = async function () {
   try {
@@ -129,6 +130,14 @@ const doLoginEmail = async function () {
     state.wrongPassword = true;
     console.error(error);
   }
+  const auth0User = await getUserByEmail(username.value);
+  if (!auth0User) {
+    console.error('Cannot get user info from Auth0!');
+  }
+  if (!auth0User.name.includes('@')) user.name = auth0User.name;
+  user.email = auth0User.email;
+  user.avatar = auth0User.picture;
+  AUTH.data = auth0User;
 };
 
 const doSignup = async function () {
@@ -148,7 +157,7 @@ const doSignup = async function () {
 const computedAUTH = computed(() => deepClone(AUTH));
 watch(computedAUTH, (newValue, oldValue) => {
   // Log out
-  if (newValue?.isLoggedIn == false && oldValue?.isLoggedIn) {
+  if (oldValue?.isLoggedIn && !newValue?.isLoggedIn) {
     console.log('logout');
     switch (AUTH?.type) {
       case 'facebook':
@@ -162,6 +171,19 @@ watch(computedAUTH, (newValue, oldValue) => {
         break;
     }
     AUTH.logout();
+  }
+});
+
+const computedUser = computed(() => deepClone(user));
+watch(computedUser, (newValue, oldValue) => {
+  // Log in
+  if (!oldValue?.name && newValue?.name) {
+    notifications.value.pushNoti({
+      type: 'success',
+      // TODO : No welcome back for first time customer
+      // TODO : Reactive lang doesn't work in combination
+      message: lang('welcomeBack').value + ', ' + user.name,
+    });
   }
 });
 </script>

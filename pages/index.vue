@@ -248,84 +248,12 @@
         </transition>
         <div class="flex flex-col">
           <div class="section-order">
-            <div class="invoice m-auto">
-              <div class="border h-fit">
-                <div class="text-center">
-                  <h1 class="text-xl font-bold">
-                    {{ lang('checkout').value }}
-                  </h1>
-                </div>
-                <div class="invoice-items">
-                  <div
-                    v-for="(item, index) in order.items"
-                    :key="item.id"
-                    class="flex"
-                    :data-tooltip="item.description"
-                  >
-                    <div class="invoice-item-name">
-                      <p>{{ item.name }}</p>
-                    </div>
-                    <div class="invoice-dots"></div>
-                    <p>${{ item.price }}</p>
-                    <p
-                      @click="order.items.splice(index, 1)"
-                      class="delete-item pl-2 cursor-pointer"
-                    >
-                      X
-                    </p>
-                  </div>
-                </div>
-                <p v-if="order.items.length" class="text-xs text-center">
-                  {{ lang('hoverItem').value }}
-                </p>
-                <hr class="mt-1 mb-1" />
-                <div class="invoice-tax flex">
-                  <div class="invoice-item-name">
-                    <p>
-                      {{ lang('tax').value }} ({{
-                        Math.floor(tax * 10000) / 100
-                      }}%)
-                    </p>
-                  </div>
-                  <div class="invoice-dots"></div>
-                  <p>
-                    ${{ Math.floor(order.priceBeforeTax * tax * 100) / 100 }}
-                  </p>
-                </div>
-                <div class="invoice-total flex">
-                  <p>{{ lang('total').value }}</p>
-                  <div class="invoice-dots"></div>
-                  <p>${{ order.price }}</p>
-                </div>
-              </div>
-            </div>
-            <div
-              v-if="order.status == 'Ordering'"
-              class="flex flex-col customer"
-            >
-              <label class="pl-4 pt-1">{{ lang('name').value }}</label>
-              <input
-                class="customer-name"
-                v-model="session.customer"
-                :placeholder="lang('yourName').value"
-              />
-              <label class="pl-4 pt-1">{{ lang('table').value }}</label>
-              <select v-model="session.table">
-                <option disabled selected value="">
-                  {{ lang('yourTable').value }}
-                </option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-              </select>
-            </div>
+            <OrderDetails
+              :order="order"
+              :title="lang('checkout').value"
+              editable
+            />
+            <TableInfo v-if="order.status == 'Ordering'" />
             <div
               v-if="
                 order.status == 'Processing' ||
@@ -373,16 +301,18 @@ const notifications = inject('notifications');
 const order = inject('order');
 const orders = inject('orders');
 const APP = inject('APP');
+const AUTH = inject('AUTH');
+import { tax } from '~/static/config';
 
-// UI
-const UI = reactive({
+// states
+const states = reactive({
   cancelConfirm: false,
   warnTooManyItems: false,
 });
 
 // :P
 watchEffect(() => {
-  if (order.items.length > 5 && !UI.warnTooManyItems) {
+  if (order.items.length > 5 && !states.warnTooManyItems) {
     notifications.value.pushNoti(lang('tooManyItems'));
   }
 });
@@ -645,7 +575,6 @@ const selectOption = (option, value) => {
 };
 
 // ORDER
-const tax = 0.0725;
 
 const getTimestamp = function () {
   return new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
@@ -654,6 +583,11 @@ const getTimestamp = function () {
 };
 
 const placeOrder = function () {
+  if (!AUTH.isLoggedIn) {
+    notifications.value.pushNoti(lang('loginRequired'));
+    APP.isShownLoginBox = true;
+    return;
+  }
   if (order.items.length === 0) return;
   // update
   order.status = 'Received';
@@ -688,18 +622,12 @@ const placeOrder = function () {
   order.date = '';
 };
 
-function cancelOrder() {
-  order.status = 'Cancelled';
-  db.upsert.order(order);
-  notifications.value.pushNoti(lang('orderCancelled'));
-}
-
 // Computed
 const sortOrder = inject('sortOrder');
 const sortedOrders = computed(() => {
-  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
-  const todayOrders = orders.value.filter((order) => order.date === today); // Filter orders with today's date
-  return todayOrders.sort((a, b) => sortOrder[a.status] - sortOrder[b.status]); // Sort the filtered orders
+  // const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+  // const todayOrders = orders.value.filter((order) => order.date === today); // Filter orders with today's date
+  return orders.value.sort((a, b) => sortOrder[a.status] - sortOrder[b.status]); // Sort the filtered orders
 });
 
 // MODULE: DATA

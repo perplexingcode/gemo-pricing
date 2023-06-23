@@ -117,14 +117,28 @@ useHead({
   meta: [
     { name: 'Wunderbar', content: 'Cocktails, wines, boba & delicous foods.' },
   ],
+  link: [
+    {
+      rel: 'icon',
+      type: 'image/x-icon',
+      href: 'https://img.icons8.com/external-flat-icons-inmotus-design/67/external-beach-bocals-flat-icons-inmotus-design.png',
+    },
+  ],
   // bodyAttrs: {
   //   class: 'test',
   // },
   script: [
-    // {
-    //   async: true,
-    //   src: '~/static/facebook_auth.js',
-    // },
+    {
+      innerHTML: `Object.prototype.toggleState = function (key) {
+  console.log('ai cha chat nhi');
+  if (this?.state === undefined) {
+    this.state = {};
+  }
+  const state = this.state;
+  state[key] = !state[key];
+};
+`,
+    },
     // {
     //   async: true,
     //   defer: true,
@@ -328,11 +342,14 @@ setInterval(async function () {
       orders.value[index].status = status;
       switch (status) {
         case 'Received':
-          notifications.value.pushNoti(lang('orderReceived'));
+          notifications.value.pushNoti(lang('orderPlaced'));
+          break;
+        case 'Processing':
+          notifications.value.pushNoti(lang('orderProcessing'));
           break;
         case 'Done':
           notifications.value.push({
-            message: lang('orderDone'),
+            message: lang('orderCompleted'),
             type: 'success',
           });
           break;

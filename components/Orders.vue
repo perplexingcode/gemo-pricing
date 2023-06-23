@@ -80,11 +80,7 @@
               class="flex flex-col items-center justify-center w-full h-[28px] text-xs cursor-pointer mt-1 bg-gray-300 hover:bg-gray-300 rounded"
               :class="['btn', 'order-options', order.status.toLowerCase()]"
             >
-              <span
-                @click="
-                  order.state.isShownOptions = !order.state.isShownOptions
-                "
-              >
+              <span @click="handleShowOptions(order)">
                 {{ lang('options').value }}
               </span>
             </div>
@@ -99,81 +95,113 @@
             {{ lang('orderCancel').value }}
           </button>
           <button
+            v-if="order.status == 'Processing'"
+            class="see-details w-full"
+            @click="order.toggleState('isShownDetails')"
+          >
+            {{ lang('seeDetails').value }}
+          </button>
+          <button
             v-if="order.status == 'Done'"
             class="reorder w-full"
-            @click="reorder(order)"
+            @click="order.toggleState('isShownTableInfo')"
           >
             {{ lang('reorder').value }}
           </button>
           <button
-            v-if="order.status == 'Done'"
+            v-if="['Done', 'Cancelled'].includes(order.status)"
             class="rate-order w-full"
             @click="APP.rateOrder = true"
           >
             {{ lang('rateOrder').value }}
           </button>
         </div>
-        <div :class="['rate-order']" class="modal" v-if="APP.rateOrder">
-          <div class="flex flex-col items-center">
-            <h3 class="text-lg font-bold mb-2">{{ lang('rateUs').value }}</h3>
-            <div class="stars flex mb-2">
-              <div v-for="n in 5" class="star" :key="n">
-                <img
-                  v-show="review.star >= n"
-                  src="~/assets/img/icons8-star-32-fill.png"
-                  alt="star"
-                  @click="review.star = n"
-                />
-                <img
-                  v-show="review.star < n"
-                  width="32"
-                  height="32"
-                  src="~/assets/img/icons8-star-32.png"
-                  alt="star"
-                  @click="review.star = n"
-                />
-              </div>
+        <div class="option-content relative">
+          <OrderDetails
+            v-show="order.state.isShownDetails"
+            :order="order"
+            :title="lang('orderDetails').value"
+          />
+          <div v-show="order.state.isShownTableInfo">
+            <TableInfo />
+            <div class="text-center">
+              <button @click="reorder">
+                {{ lang('order').value }}
+              </button>
             </div>
-            <div>
-              <textarea
-                class="w-full h-[100px] p-1 border-2 border-gray-400 rounded"
-                v-model="review.feedback"
-                :placeholder="lang('writeFeedback').value"
-              ></textarea>
-            </div>
-            <button @click="submitFeedback(order)">
-              {{ lang('submit').value }}
-            </button>
-          </div>
-          <div>
             <img
-              width="24"
-              height="24"
-              src="https://img.icons8.com/material-two-tone/24/1D7CA4/cancel--v1.png"
-              alt="close"
-              class="close absolute top-[-1rem] right-[-1.5rem] cursor-pointer"
-              @click="APP.rateOrder = false"
+              class="absolute top-[-10px] right-0 cursor-pointer"
+              @click="order.toggleState('isShownTableInfo')"
+              width="26"
+              height="26"
+              src="https://img.icons8.com/metro/26/circled-chevron-up.png"
+              alt="circled-chevron-up"
             />
           </div>
         </div>
-        <div v-if="APP.cancelConfirm" class="cancel-confirm text-center">
-          <p>{{ lang('orderCancelConfirm').value }}</p>
-          <button
-            class="w-full bg-gray-500 hover:bg-orange-500"
-            @click="
-              cancelOrder();
-              APP.cancelConfirm = false;
-            "
-          >
-            {{ lang('orderCancel').value }}
-          </button>
-          <button
-            class="w-full hover:bg-teal-700"
-            @click="APP.cancelConfirm = false"
-          >
-            {{ lang('goBack').value }}
-          </button>
+      </div>
+    </div>
+  </div>
+  <div class="pop-ups">
+    <div v-if="APP.cancelConfirm" class="cancel-confirm text-center">
+      <p>{{ lang('orderCancelConfirm').value }}</p>
+      <button
+        class="w-full bg-gray-500 hover:bg-orange-500"
+        @click="
+          cancelOrder();
+          APP.cancelConfirm = false;
+        "
+      >
+        {{ lang('orderCancel').value }}
+      </button>
+      <button
+        class="w-full hover:bg-teal-700"
+        @click="APP.cancelConfirm = false"
+      >
+        {{ lang('goBack').value }}
+      </button>
+    </div>
+    <div :class="['rate-order']" class="modal" v-if="APP.rateOrder">
+      <div class="flex flex-col items-center">
+        <h3 class="text-lg font-bold mb-2">{{ lang('rateUs').value }}</h3>
+        <div class="stars flex mb-2">
+          <div v-for="n in 5" class="star" :key="n">
+            <img
+              v-show="review.star >= n"
+              src="~/assets/img/icons8-star-32-fill.png"
+              alt="star"
+              @click="review.star = n"
+            />
+            <img
+              v-show="review.star < n"
+              width="32"
+              height="32"
+              src="~/assets/img/icons8-star-32.png"
+              alt="star"
+              @click="review.star = n"
+            />
+          </div>
         </div>
+        <div>
+          <textarea
+            class="w-full h-[100px] p-1 border-2 border-gray-400 rounded"
+            v-model="review.feedback"
+            :placeholder="lang('writeFeedback').value"
+          ></textarea>
+        </div>
+        <button @click="submitFeedback()">
+          {{ lang('submit').value }}
+        </button>
+      </div>
+      <div>
+        <img
+          width="24"
+          height="24"
+          src="https://img.icons8.com/material-two-tone/24/1D7CA4/cancel--v1.png"
+          alt="close"
+          class="close absolute top-[-1rem] right-[-1.5rem] cursor-pointer"
+          @click="APP.rateOrder = false"
+        />
       </div>
     </div>
   </div>
@@ -202,10 +230,30 @@ const db = inject('db');
 
 const APP = inject('APP');
 
+const selectedOrder = ref(null);
 const review = reactive({
   star: 0,
   feedback: '',
 });
+
+watchEffect(
+  () => {
+    const index = allOrders.value.findIndex(
+      (o) => o.id === selectedOrder.value
+    );
+    const order = allOrders.value[index];
+    if (APP.rateOrder) {
+      review.star = order?.review?.star || 0;
+      review.feedback = order?.review?.feedback || '';
+    }
+  },
+  { immediate: true }
+);
+
+const handleShowOptions = (order) => {
+  order.state.isShownOptions = !order.state.isShownOptions;
+  selectedOrder.value = order.id;
+};
 
 const editOrder = (order) => {
   if (APP.isEditingOrder) {
@@ -229,9 +277,9 @@ const editOrder = (order) => {
   allOrders.value[index].state.isEditing = true;
 };
 
-const reorder = (order) => {
-  const index = allOrders.value.findIndex((o) => o.id === order.id);
-  order = deepClone(allOrders.value[index]);
+const reorder = () => {
+  const index = allOrders.value.findIndex((o) => o.id === selectedOrder.value);
+  const order = deepClone(allOrders.value[index]);
   order.id = v4();
   order.status = 'Received';
   allOrders.value.push(order);
@@ -242,18 +290,52 @@ const reorder = (order) => {
   });
 };
 
-const cancelOrder = (order) => {
-  const index = allOrders.value.findIndex((o) => o.id === order.id);
- 
+const cancelOrder = () => {
+  const index = allOrders.value.findIndex((o) => o.id === selectedOrder.value);
   allOrders.value[index].status = 'Cancelled';
   db.upsert.order(allOrders.value[index]);
+  notifications.value.pushNoti(lang('orderCancelled'));
 };
 
-const submitFeedback = (order) => {
-  const index = allOrders.value.findIndex((o) => o.id === order.id);
+const submitFeedback = () => {
+  const index = allOrders.value.findIndex((o) => o.id === selectedOrder.value);
   allOrders.value[index].review = review;
   db.upsert.order(allOrders.value[index]);
   APP.rateOrder = false;
+  switch (review.star) {
+    case 1:
+      notifications.value.pushNoti({
+        type: 'error',
+        message: lang('feedback1'),
+      });
+      break;
+    case 2:
+      notifications.value.pushNoti({
+        type: 'error',
+        message: lang('feedback2'),
+      });
+      break;
+    case 3:
+      notifications.value.pushNoti({
+        type: 'error',
+        message: lang('feedback3'),
+      });
+      break;
+    case 4:
+      notifications.value.pushNoti({
+        type: 'success',
+        message: lang('feedback4'),
+      });
+      break;
+    case 5:
+      notifications.value.pushNoti({
+        type: 'success',
+        message: lang('feedback5'),
+      });
+      break;
+    default:
+      break;
+  }
 };
 </script>
 <style></style>

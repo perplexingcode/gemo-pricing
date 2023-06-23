@@ -81,6 +81,7 @@ body {
 
 button {
   @apply bg-cyan-800 text-white rounded p-2 m-2;
+  white-space: nowrap;
 }
 button:disabled {
   @apply bg-cyan-700 rounded p-2 m-2 text-cyan-500;
@@ -90,13 +91,6 @@ button:disabled {
   -webkit-user-select: none; /* Safari */
   -ms-user-select: none; /* IE 10 and IE 11 */
   user-select: none; /* Standard syntax */
-}
-
-.customer input,
-.customer select {
-  margin-left: 1rem;
-  margin-right: 1rem;
-  margin-bottom: 0.5rem;
 }
 
 .input-group {
