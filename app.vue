@@ -129,7 +129,9 @@ useHead({
   // },
   script: [
     {
-      innerHTML: `Object.prototype.toggleState = function (key) {
+      innerHTML: `
+      if (Object.prototype.toggleState) return; 
+      Object.prototype.toggleState = function (key) {
   console.log('ai cha chat nhi');
   if (this?.state === undefined) {
     this.state = {};
