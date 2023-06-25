@@ -86,7 +86,7 @@ const passwordConfirm = ref('Token@00');
 
 onMounted(() => {
   nextTick(() => {
-    doLoginEmail(username.value, password.value);
+    // doLoginEmail(username.value, password.value);
   });
 });
 
