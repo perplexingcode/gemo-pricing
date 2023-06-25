@@ -130,15 +130,15 @@ useHead({
   script: [
     {
       innerHTML: `
-      if (Object.prototype.toggleState) return; 
-      Object.prototype.toggleState = function (key) {
-  console.log('ai cha chat nhi');
-  if (this?.state === undefined) {
-    this.state = {};
-  }
-  const state = this.state;
-  state[key] = !state[key];
-};
+      if (!Object.prototype.toggleState) {
+        Object.prototype.toggleState = function (key) {
+          if (this?.state === undefined) {
+              this.state = {};
+          }
+        const state = this.state;
+         state[key] = !state[key];
+        };
+      }
 `,
     },
     // {
