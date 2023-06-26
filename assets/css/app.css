@@ -87,10 +87,12 @@ button:disabled {
   @apply bg-cyan-700 rounded p-2 m-2 text-cyan-500;
 }
 
-.btn span {
-  -webkit-user-select: none; /* Safari */
-  -ms-user-select: none; /* IE 10 and IE 11 */
-  user-select: none; /* Standard syntax */
+button,
+.btn {
+  -moz-user-select: none; /* Firefox */
+  -webkit-user-select: none; /* Safari and Chrome */
+  -ms-user-select: none; /* IE/Edge */
+  user-select: none;
 }
 
 .input-group {
