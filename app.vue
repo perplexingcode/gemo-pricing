@@ -93,6 +93,7 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { v4 } from 'uuid';
 
@@ -128,19 +129,24 @@ useHead({
   //   class: 'test',
   // },
   script: [
-    {
-      innerHTML: `
-      if (!Object.prototype.toggleState) {
-        Object.prototype.toggleState = function (key) {
-          if (this?.state === undefined) {
-              this.state = {};
-          }
-        const state = this.state;
-         state[key] = !state[key];
-        };
-      }
-`,
-    },
+    //     {
+    //       innerHTML: `
+    //       console.log(Object.prototype.toggleState);
+    //       if (!Object.prototype.toggleState) {
+    //   Object.prototype.toggleState = function (key) {
+    //     console.log('ai cha chat nhi');
+    //     if (typeof this !== 'object' || this === null) {
+    //       console.error('Cannot invoke toggleState on non-object value.');
+    //     }
+    //     if (typeof this.state === 'undefined') {
+    //       this.state = {};
+    //     }
+    //     const state = this.state;
+    //     state[key] = !state[key];
+    //   };
+    // }
+    // `,
+    //     },
     // {
     //   async: true,
     //   defer: true,
@@ -369,19 +375,8 @@ setInterval(async function () {
   }
 }, 2000);
 
-// PROVIDES
-provide('lang', lang);
-provide('notifications', notifications);
-provide('session', session);
-provide('user', user);
-provide('order', order);
-provide('orders', orders);
-provide('sortOrder', sortOrder);
-provide('db', db);
-provide('APP', APP);
-provide('AUTH', AUTH);
+// Prototypes
 
-//
 Array.prototype.pushWithId = function (...items) {
   items.forEach((item) => {
     const itemWithId = {
@@ -401,6 +396,32 @@ Array.prototype.pushNoti = function (noti) {
   };
   Array.prototype.push.call(this, notiWithId);
 };
+
+// if (!Object.prototype.toggleState) {
+//   Object.prototype.toggleState = function (key) {
+//     if (typeof this !== 'object' || this === null) {
+//       console.error('Cannot invoke toggleState on non-object value.');
+//     }
+
+//     if (typeof this.state === 'undefined') {
+//       this.state = {};
+//     }
+
+//     const state = this.state;
+//     state[key] = !state[key];
+//   };
+// }
+// PROVIDES
+provide('lang', lang);
+provide('notifications', notifications);
+provide('session', session);
+provide('user', user);
+provide('order', order);
+provide('orders', orders);
+provide('sortOrder', sortOrder);
+provide('db', db);
+provide('APP', APP);
+provide('AUTH', AUTH);
 
 // FUNCTION DECLARATIONS
 

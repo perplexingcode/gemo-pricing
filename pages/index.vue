@@ -269,7 +269,7 @@
             <div class="text-center">
               <button
                 @click="placeOrder"
-                :disabled="session.table === '' || order.items.length === 0"
+                :disabled="!session.table || order.items.length === 0"
               >
                 {{
                   APP.isEditingOrder

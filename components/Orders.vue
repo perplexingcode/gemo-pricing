@@ -80,7 +80,12 @@
               class="flex flex-col items-center justify-center w-full h-[28px] text-xs cursor-pointer mt-1 bg-gray-300 hover:bg-gray-300 rounded"
               :class="['btn', 'order-options', order.status.toLowerCase()]"
             >
-              <span @click="handleShowOptions(order)">
+              <span
+                @click="
+                  toggleState(order, 'isShownOptions');
+                  selectedOrder = order.id;
+                "
+              >
                 {{ lang('options').value }}
               </span>
             </div>
@@ -97,14 +102,14 @@
           <button
             v-if="order.status == 'Processing'"
             class="see-details w-full"
-            @click="order.toggleState('isShownDetails')"
+            @click="toggleState(order, 'isShownDetails')"
           >
             {{ lang('seeDetails').value }}
           </button>
           <button
             v-if="order.status == 'Done'"
             class="reorder w-full"
-            @click="order.toggleState('isShownTableInfo')"
+            @click="toggleState(order, 'isShownTableInfo')"
           >
             {{ lang('reorder').value }}
           </button>
@@ -131,7 +136,7 @@
             </div>
             <img
               class="absolute top-[-10px] right-0 cursor-pointer"
-              @click="order.toggleState('isShownTableInfo')"
+              @click="toggleState(order, 'isShownTableInfo')"
               width="26"
               height="26"
               src="https://img.icons8.com/metro/26/circled-chevron-up.png"
@@ -207,7 +212,7 @@
   </div>
 </template>
 <script setup>
-import { deepClone } from '~/static/util';
+import { deepClone, toggleState } from '~/static/util';
 import { v4 } from 'uuid';
 
 const props = defineProps({
@@ -250,11 +255,6 @@ watchEffect(
   { immediate: true }
 );
 
-const handleShowOptions = (order) => {
-  order.state.isShownOptions = !order.state.isShownOptions;
-  selectedOrder.value = order.id;
-};
-
 const editOrder = (order) => {
   if (APP.isEditingOrder) {
     notifications.value.pushNoti({
@@ -291,7 +291,9 @@ const reorder = () => {
 };
 
 const cancelOrder = () => {
+  console.log(selectedOrder.value);
   const index = allOrders.value.findIndex((o) => o.id === selectedOrder.value);
+  console.log(index);
   allOrders.value[index].status = 'Cancelled';
   db.upsert.order(allOrders.value[index]);
   notifications.value.pushNoti(lang('orderCancelled'));

@@ -15,6 +15,15 @@ export const removeState = function (obj) {
   }
   return obj;
 };
+
+export const toggleState = function (obj, key) {
+  if (typeof obj.state === 'undefined') {
+    obj.state = {};
+  }
+
+  const state = obj.state;
+  state[key] = !state[key];
+};
 export const dir = function (path) {
   const config = useRuntimeConfig();
   const rootDir = config.rootDir;
